@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 
 const Profile = () => {
-  //demo data
+  //demo data for user
   const userData = {
     name: 'John Doe',
     role: 'Citizen',

@@ -8,6 +8,8 @@ const Home = () => {
   const userState = useSelector(state => state?.user);
   const { user, loading } = userState || {};
 
+
+  //stats for the website
   const stats = [
     { number: "7", label: "Provinces Covered" },
     { number: "24/7", label: "Support Available" },

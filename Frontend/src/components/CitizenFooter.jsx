@@ -83,7 +83,7 @@ const CitizenFooter = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-green-700 text-center text-gray-300">
-          <p>© 2025 SmartReport. All rights reserved. | Powered by Ready</p>
+          <p>© 2025 SmartReport. All rights reserved.</p>
         </div>
       </div>
     </footer>

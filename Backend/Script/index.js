@@ -30,11 +30,11 @@ const runApp = async () => {
         methods:["POST","GET","DELETE","PUT","PATCH"],
       credentials: true
     }));
-
+    
     app.use("/api/auth",authRouter);
 
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

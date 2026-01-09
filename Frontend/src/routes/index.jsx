@@ -18,6 +18,9 @@ import ADashboard from "@/pages/ADashboard";
 import AReports from "@/pages/AReports";
 import ACitizens from "@/pages/ACitizens";
 import APolices from "@/pages/APolices";
+import VerifyToken from "@/pages/VerifyToken";
+import ChangePassword from "@/pages/ChangePassword";
+import NotFoundPage from "@/pages/NotFound";
 
 
 const router = createBrowserRouter([{
@@ -53,7 +56,7 @@ const router = createBrowserRouter([{
         {
             path:"myreport",
             element:<MyReports/>
-        }
+        },
     ]
     },
     {
@@ -107,6 +110,18 @@ const router = createBrowserRouter([{
                 element:<PChats/>
             }
         ]
+    },
+    {
+            path:"verifytoken",
+            element:<VerifyToken/>
+    },
+    {
+        path:"changepassword",
+        element:<ChangePassword/>
+    },
+    {
+        path:"*",
+        element:<NotFoundPage/>
     }
 ]
 }]);

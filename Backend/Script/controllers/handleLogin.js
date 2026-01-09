@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import argon2 from "argon2";
-import { generateJwtToken } from "../helpers/generateJwtToken.js";
+import { generateJwtToken } from "../helpers/generateJWTToken.js";
 
 const loginUser = async (req, res) => {
   try {

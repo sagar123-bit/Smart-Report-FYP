@@ -2,11 +2,13 @@ import UserBeforeRegister from "../models/userBeforeRegister.js";
 import User from "../models/User.js";
 import { generateToken } from "../helpers/generateToken.js";
 import argon2 from "argon2";
+import { sendVerificationEmail } from "../services/nodemailer/sendVerificationEmail.js";
+
 
 const handleUserBeforeRegister = async (req, res) => {
   try {
+    console.log("Request Body:", req.body);
     const { email, password, ...rest } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({
         message: "Email and password are required",
@@ -38,6 +40,7 @@ const handleUserBeforeRegister = async (req, res) => {
       Object.assign(checkValidation, rest);
 
       await checkValidation.save();
+      await sendVerificationEmail(email, token);
 
       return res.status(200).json({
         message: "Verification token resent",
@@ -53,7 +56,7 @@ const handleUserBeforeRegister = async (req, res) => {
       validationToken: token,
       tokenTime: expiresAt,
     });
-
+    await sendVerificationEmail(email, token);
     return res.status(201).json({
       message: "User stored successfully",
       user: newUser,

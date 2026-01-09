@@ -1,6 +1,6 @@
-import mongoose, { model } from 'mongoose';
+import mongoose from 'mongoose';
 const { model, models, Schema } = mongoose;
-
+import { policeSchema } from './User.js';
 
 
 const UserBeforeRegisterSchema = new Schema({
@@ -39,6 +39,12 @@ const UserBeforeRegisterSchema = new Schema({
         type: String,
         required: true
     },
+     policeData: {
+          type: policeSchema,
+          required: function () {
+            return this.userType === "police";
+          },
+        },
     validateToken:{
         type:String,
         required:true

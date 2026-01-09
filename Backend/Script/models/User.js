@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema, model, models } = mongoose;
 
-const policeSchema = new Schema(
+export const policeSchema = new Schema(
   {
     policeId: {
       type: String,

@@ -17,3 +17,20 @@ export const generateJwtToken = (userId) => {
     }
   );
 };
+
+export const verifyJwtToken = (token) => {
+  if (!token) {
+    throw new Error("Token is required");
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: "smart-report",
+      audience: "user",
+    });
+
+    return decoded; 
+  } catch (error) {
+    throw new Error("Invalid or expired token");
+  }
+};

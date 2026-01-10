@@ -8,8 +8,11 @@ import { toast } from "react-toastify";
 import { LOGIN } from "@/routes/serverEndpoint";
 import axiosService from "@/utils/axiosService";
 import ForgotPasswordDialog from "@/components/ForgetPassDialog";
+import { fetchAuthUser } from "@/store/slices/userSlice";
+import { useDispatch } from "react-redux";
 
 const Login = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +25,7 @@ const Login = () => {
     try {
       const response = await axiosService.post(LOGIN, { email, password }, { withCredentials: true });
       toast.success(response?.data?.message || "Login successful.");
+      await dispatch(fetchAuthUser());
       if (response?.data?.user?.userType === "admin") {
         navigate("/admindashboard");
       } else if (response?.data?.user?.userType === "police") {

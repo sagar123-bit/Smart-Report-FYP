@@ -1,11 +1,17 @@
+
 import { Link } from "react-router";
+import { useSelector } from "react-redux";
 
 const CitizenFooter = () => {
+  const userData = useSelector(state => state?.user?.user);
+  
   const quickLinks = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
-    { name: "Login", href: "/login" },
-    { name: "Register", href: "/register" },
+    ...(!userData ? [
+      { name: "Login", href: "/login" },
+      { name: "Register", href: "/register" },
+    ] : []),
   ];
 
   const emergencyContacts = [

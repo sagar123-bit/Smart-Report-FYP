@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from "dotenv"
 dotenv.config();
 import authRouter from './routes/index.js';
+import authMiddleware from './middleware/authMiddleware.js';
 
 
 
@@ -30,8 +31,16 @@ const runApp = async () => {
         methods:["POST","GET","DELETE","PUT","PATCH"],
       credentials: true
     }));
+    app.use(authMiddleware);
     
     app.use("/api/auth",authRouter);
+
+    app.get("/userdata",(req,res)=>{
+      return res.status(200).json({
+        message:"User data fetched successfully",
+        user:req.user
+      });
+    });
 
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

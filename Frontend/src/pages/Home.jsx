@@ -6,10 +6,8 @@ import { Card, CardContent } from "../components/ui/card";
 const Home = () => {
   const navigate = useNavigate();
   const userState = useSelector(state => state?.user);
-  const { user, loading } = userState || {};
+  const { user } = userState || {};
 
-
-  //stats for the website
   const stats = [
     { number: "7", label: "Provinces Covered" },
     { number: "24/7", label: "Support Available" },
@@ -57,7 +55,7 @@ const Home = () => {
             </p>
             {user ? (
               <Button
-                onClick={() => navigate("/report")}
+                onClick={() => navigate("/reportcrime")}
                 className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
                 size="lg"
               >

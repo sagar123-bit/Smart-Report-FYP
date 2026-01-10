@@ -73,7 +73,11 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
-
+    userImage:{
+      type:String,
+      required:false,
+      default:null,
+    },
     policeData: {
       type: policeSchema,
       required: function () {

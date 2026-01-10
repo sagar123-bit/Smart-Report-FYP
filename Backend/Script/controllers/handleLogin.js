@@ -42,6 +42,7 @@ const loginUser = async (req, res) => {
         userId: user.userId,
         email: user.email,
         userName: user.userName,
+        userType: user.userType,
       },
     });
 

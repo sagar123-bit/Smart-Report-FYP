@@ -41,15 +41,27 @@ const verifyUserAndCreateAccount = async (req, res) => {
 
     const userId = `USR_${nanoid(10)}`;
 
-    const newUser = await User.create({
+
+    const userPayload = {
       userId,
       userName: tempUser.userName,
       email: tempUser.email,
+      phoneNumber: tempUser.phoneNumber,
       province: tempUser.province,
       district: tempUser.district,
-      municipality: tempUser.municipality,
       password: tempUser.password,
-    });
+      userType: tempUser.userType,
+    };
+
+    if (tempUser.userType === "police") {
+      userPayload.policeData = {
+        policeId: tempUser.policeData.policeId,
+        rank: tempUser.policeData.rank,
+        station: tempUser.policeData.station,
+      };
+    }
+
+    const newUser = await User.create(userPayload);
 
     await UserBeforeRegister.deleteOne({ email });
 
@@ -60,13 +72,12 @@ const verifyUserAndCreateAccount = async (req, res) => {
         userId: newUser.userId,
         email: newUser.email,
         userName: newUser.userName,
+        userType: newUser.userType,
       },
     });
-
   } catch (error) {
     console.error("Error verifying user", error);
 
-    // Handle rare userId collision
     if (error.code === 11000) {
       return res.status(409).json({
         message: "UserId collision, please retry",

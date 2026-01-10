@@ -21,6 +21,13 @@ export const policeSchema = new Schema(
         return this.userType === "police";
       },
     },
+     status: {
+      type: String,
+      default: "pending",
+      required: function () {
+        return this.userType === "police";
+      },
+    },
   },
   { _id: false } 
 );
@@ -73,7 +80,18 @@ const UserSchema = new Schema(
         return this.userType === "police";
       },
     },
-  },
+  },{
+    resetUrl:{
+      type:String,
+      required:false,
+      default:null,
+    }
+  },{
+    resetUrlExpires: {
+    type: Date,
+    default: null,
+    required: false,
+  }},
   { timestamps: true }
 );
 

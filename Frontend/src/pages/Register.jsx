@@ -31,7 +31,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
 
   const [citizenForm, setCitizenForm] = useState({
-    username: "",
+    userName: "",
     email: "",
     phoneNumber: "",
     province: "",
@@ -41,7 +41,7 @@ const Register = () => {
   });
 
   const [policeForm, setPoliceForm] = useState({
-    username: "",
+    userName: "",
     policeId: "",
     rank: "",
     phoneNumber: "",
@@ -55,17 +55,12 @@ const Register = () => {
 
   const handleCitizenChange = (field, value) => {
     setCitizenForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const handlePoliceChange = (field, value) => {
     setPoliceForm((prev) => ({ ...prev, [field]: value }));
-
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const validateForm = () => {
@@ -96,35 +91,42 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
 
-    const formData =
-      userType === "citizen"
-        ? { userType: "citizen", ...citizenForm }
-        : { userType: "police", ...policeForm };
+    let formData;
 
-  try{
-    const response = await axiosService.post(USER_BEFORE_REGISTER, formData);
-    console.log(response);
-    toast.success(response?.data?.message||"Registration successful! Please verify your email.");
-    navigate("/verifytoken", { state: { email: formData.email } });
-  } catch (error){
-    console.log(error);
-    toast.error(error?.response?.data?.message||"Registration failed. Please try again.");
-  }
-  finally{
-    setIsLoading(false);
-  }
+    if (userType === "citizen") {
+      const { confirmPassword, ...rest } = citizenForm;
+      formData = { userType: "citizen", ...rest };
+    } else {
+      const { policeId, rank, station, confirmPassword, ...rest } = policeForm;
+      formData = {
+        userType: "police",
+        ...rest,
+        policeData: { policeId, rank, station } 
+      };
+    }
+    // console.log(formData);
+    try {
+      const response = await axiosService.post(USER_BEFORE_REGISTER, formData);
+      toast.success(
+        response?.data?.message || "Registration successful! Please verify your email."
+      );
+      navigate("/verifytoken", { state: { email: formData.email } });
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        error?.response?.data?.message || "Registration failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePhoneNumberChange = (e, isCitizen = true) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-    
     if (isCitizen) {
       handleCitizenChange("phoneNumber", value);
     } else {
@@ -151,9 +153,7 @@ const Register = () => {
             alt="SmartReport Logo"
             className="h-16 w-16 object-contain mb-4"
           />
-          <CardTitle className="text-2xl font-bold text-center">
-            Register
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Register</CardTitle>
           <CardDescription className="text-center">
             Create your SmartReport account
           </CardDescription>
@@ -187,10 +187,8 @@ const Register = () => {
                 <div className="space-y-2">
                   <Label>Username</Label>
                   <Input
-                    value={citizenForm.username}
-                    onChange={(e) =>
-                      handleCitizenChange("username", e.target.value)
-                    }
+                    value={citizenForm.userName}
+                    onChange={(e) => handleCitizenChange("userName", e.target.value)}
                     required
                   />
                 </div>
@@ -200,9 +198,7 @@ const Register = () => {
                   <Input
                     type="email"
                     value={citizenForm.email}
-                    onChange={(e) =>
-                      handleCitizenChange("email", e.target.value)
-                    }
+                    onChange={(e) => handleCitizenChange("email", e.target.value)}
                     required
                   />
                 </div>
@@ -227,19 +223,14 @@ const Register = () => {
                     <Label>Province</Label>
                     <Select
                       value={citizenForm.province}
-                      onValueChange={(value) =>
-                        handleCitizenChange("province", value)
-                      }
+                      onValueChange={(value) => handleCitizenChange("province", value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem
-                            key={p}
-                            value={p.toLowerCase().replace(" ", "-")}
-                          >
+                          <SelectItem key={p} value={p.toLowerCase().replace(" ", "-")}>
                             {p}
                           </SelectItem>
                         ))}
@@ -251,9 +242,7 @@ const Register = () => {
                     <Label>District</Label>
                     <Input
                       value={citizenForm.district}
-                      onChange={(e) =>
-                        handleCitizenChange("district", e.target.value)
-                      }
+                      onChange={(e) => handleCitizenChange("district", e.target.value)}
                       required
                     />
                   </div>
@@ -267,9 +256,7 @@ const Register = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         value={citizenForm.password}
-                        onChange={(e) =>
-                          handleCitizenChange("password", e.target.value)
-                        }
+                        onChange={(e) => handleCitizenChange("password", e.target.value)}
                         required
                         minLength={6}
                         className="pr-10"
@@ -279,16 +266,10 @@ const Register = () => {
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-sm text-red-500">{errors.password}</p>
-                    )}
+                    {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
                   </div>
 
                   <div className="space-y-2 relative">
@@ -298,9 +279,7 @@ const Register = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm Password"
                         value={citizenForm.confirmPassword}
-                        onChange={(e) =>
-                          handleCitizenChange("confirmPassword", e.target.value)
-                        }
+                        onChange={(e) => handleCitizenChange("confirmPassword", e.target.value)}
                         required
                         className="pr-10"
                       />
@@ -309,11 +288,7 @@ const Register = () => {
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {errors.confirmPassword && (
@@ -328,10 +303,8 @@ const Register = () => {
                   <Label>Username</Label>
                   <Input
                     placeholder="Username"
-                    value={policeForm.username}
-                    onChange={(e) =>
-                      handlePoliceChange("username", e.target.value)
-                    }
+                    value={policeForm.userName}
+                    onChange={(e) => handlePoliceChange("userName", e.target.value)}
                     required
                   />
                 </div>
@@ -342,9 +315,7 @@ const Register = () => {
                     <Input
                       placeholder="Police ID"
                       value={policeForm.policeId}
-                      onChange={(e) =>
-                        handlePoliceChange("policeId", e.target.value)
-                      }
+                      onChange={(e) => handlePoliceChange("policeId", e.target.value)}
                       required
                     />
                   </div>
@@ -353,9 +324,7 @@ const Register = () => {
                     <Input
                       placeholder="Rank"
                       value={policeForm.rank}
-                      onChange={(e) =>
-                        handlePoliceChange("rank", e.target.value)
-                      }
+                      onChange={(e) => handlePoliceChange("rank", e.target.value)}
                       required
                     />
                   </div>
@@ -382,9 +351,7 @@ const Register = () => {
                       type="email"
                       placeholder="Email"
                       value={policeForm.email}
-                      onChange={(e) =>
-                        handlePoliceChange("email", e.target.value)
-                      }
+                      onChange={(e) => handlePoliceChange("email", e.target.value)}
                       required
                     />
                   </div>
@@ -395,19 +362,14 @@ const Register = () => {
                     <Label>Province</Label>
                     <Select
                       value={policeForm.province}
-                      onValueChange={(v) =>
-                        handlePoliceChange("province", v)
-                      }
+                      onValueChange={(v) => handlePoliceChange("province", v)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Province" />
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem
-                            key={p}
-                            value={p.toLowerCase().replace(" ", "-")}
-                          >
+                          <SelectItem key={p} value={p.toLowerCase().replace(" ", "-")}>
                             {p}
                           </SelectItem>
                         ))}
@@ -420,9 +382,7 @@ const Register = () => {
                     <Input
                       placeholder="District"
                       value={policeForm.district}
-                      onChange={(e) =>
-                        handlePoliceChange("district", e.target.value)
-                      }
+                      onChange={(e) => handlePoliceChange("district", e.target.value)}
                       required
                     />
                   </div>
@@ -432,9 +392,7 @@ const Register = () => {
                     <Input
                       placeholder="Police Station"
                       value={policeForm.station}
-                      onChange={(e) =>
-                        handlePoliceChange("station", e.target.value)
-                      }
+                      onChange={(e) => handlePoliceChange("station", e.target.value)}
                       required
                     />
                   </div>
@@ -448,9 +406,7 @@ const Register = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         value={policeForm.password}
-                        onChange={(e) =>
-                          handlePoliceChange("password", e.target.value)
-                        }
+                        onChange={(e) => handlePoliceChange("password", e.target.value)}
                         required
                         minLength={6}
                         className="pr-10"
@@ -460,16 +416,10 @@ const Register = () => {
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-sm text-red-500">{errors.password}</p>
-                    )}
+                    {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
                   </div>
 
                   <div className="space-y-2 relative">
@@ -479,9 +429,7 @@ const Register = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm Password"
                         value={policeForm.confirmPassword}
-                        onChange={(e) =>
-                          handlePoliceChange("confirmPassword", e.target.value)
-                        }
+                        onChange={(e) => handlePoliceChange("confirmPassword", e.target.value)}
                         required
                         className="pr-10"
                       />
@@ -490,11 +438,7 @@ const Register = () => {
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {errors.confirmPassword && (
@@ -510,11 +454,7 @@ const Register = () => {
             </Button>
 
             <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => navigate("/login")}
-              >
+              <Button type="button" variant="link" onClick={() => navigate("/login")}>
                 Already have an account? Login here
               </Button>
             </div>

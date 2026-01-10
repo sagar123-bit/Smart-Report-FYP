@@ -45,7 +45,7 @@ const UserBeforeRegisterSchema = new Schema({
             return this.userType === "police";
           },
         },
-    validateToken:{
+    validationToken:{
         type:String,
         required:true
     },

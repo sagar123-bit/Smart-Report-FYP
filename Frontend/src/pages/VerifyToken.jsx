@@ -1,16 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
-} from "../components/ui/card";
-import { CheckCircle, RefreshCw, Shield } from "lucide-react";
-import gsap from "gsap";
+import { RefreshCw, Shield } from "lucide-react";
+import { toast } from "react-toastify";
+import axiosService from "@/utils/axiosService";
+import { REGISTER, RESEND_VERIFICATION_CODE } from "@/routes/serverEndpoint";
 
 const VerifyToken = () => {
   const navigate = useNavigate();
@@ -21,23 +14,11 @@ const VerifyToken = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(30);
-  const [verificationStatus, setVerificationStatus] = useState(null);
   const inputRefs = useRef([]);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     if (!email) {
       navigate(-1);
-      return;
-    }
-
-    if (cardRef.current) {
-      gsap.from(cardRef.current, {
-        y: 30,
-        opacity: 0,
-        duration: 0.6,
-        ease: "power3.out"
-      });
     }
   }, [email, navigate]);
 
@@ -50,25 +31,25 @@ const VerifyToken = () => {
   }, [countdown]);
 
   const handleChange = (index, value) => {
-    const numericValue = value.replace(/\D/g, "");
+    const num = value.replace(/\D/g, "");
     
-    if (numericValue.length > 1) {
-      const pastedDigits = numericValue.split("").slice(0, 6);
+    if (num.length > 1) {
+      const digits = num.split("").slice(0, 6);
       const newToken = [...token];
-      pastedDigits.forEach((digit, i) => {
+      digits.forEach((digit, i) => {
         if (i < 6) newToken[i] = digit;
       });
       setToken(newToken);
       
-      if (inputRefs.current[pastedDigits.length < 6 ? pastedDigits.length : 5]) {
-        inputRefs.current[pastedDigits.length < 6 ? pastedDigits.length : 5].focus();
+      if (inputRefs.current[digits.length < 6 ? digits.length : 5]) {
+        inputRefs.current[digits.length < 6 ? digits.length : 5].focus();
       }
     } else {
       const newToken = [...token];
-      newToken[index] = numericValue;
+      newToken[index] = num;
       setToken(newToken);
       
-      if (numericValue && index < 5 && inputRefs.current[index + 1]) {
+      if (num && index < 5 && inputRefs.current[index + 1]) {
         inputRefs.current[index + 1].focus();
       }
     }
@@ -80,9 +61,7 @@ const VerifyToken = () => {
         const newToken = [...token];
         newToken[index - 1] = "";
         setToken(newToken);
-        if (inputRefs.current[index - 1]) {
-          inputRefs.current[index - 1].focus();
-        }
+        inputRefs.current[index - 1]?.focus();
       } else {
         const newToken = [...token];
         newToken[index] = "";
@@ -92,16 +71,12 @@ const VerifyToken = () => {
     
     if (e.key === "ArrowLeft" && index > 0) {
       e.preventDefault();
-      if (inputRefs.current[index - 1]) {
-        inputRefs.current[index - 1].focus();
-      }
+      inputRefs.current[index - 1]?.focus();
     }
     
     if (e.key === "ArrowRight" && index < 5) {
       e.preventDefault();
-      if (inputRefs.current[index + 1]) {
-        inputRefs.current[index + 1].focus();
-      }
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -110,159 +85,147 @@ const VerifyToken = () => {
     const fullToken = token.join("");
     
     if (fullToken.length !== 6) {
-      gsap.to(".token-input", {
-        x: [0, 10, -10, 10, -10, 0],
-        duration: 0.5,
-        stagger: 0.05
+  
+      inputRefs.current.forEach(input => {
+        input.style.transform = "translateX(10px)";
+        setTimeout(() => input.style.transform = "translateX(-10px)", 100);
+        setTimeout(() => input.style.transform = "translateX(0)", 200);
       });
       return;
     }
 
     setIsLoading(true);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    if (fullToken === "123456") {
-      gsap.to(".token-input", {
-        backgroundColor: "#d1fae5",
-        borderColor: "#10b981",
-        scale: 1.1,
-        duration: 0.3,
-        stagger: 0.05,
-        yoyo: true,
-        repeat: 1
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      navigate("/dashboard");
-    } else {
-      gsap.to(".token-input", {
-        borderColor: "#ef4444",
-        duration: 0.3,
-        stagger: 0.05
-      });
-      setIsLoading(false);
-    }
+try{
+     const response =await axiosService.post(REGISTER,{email,token:fullToken});
+     toast.success(response?.data?.message || "Email verified successfully.");
+     navigate("/login");
+}catch(error){
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Verification failed. Please try again.");
+      inputRefs.current.forEach(input => {
+        input.style.borderColor = "#ef4444";
+      
+      })
+}
+       finally{
+         setIsLoading(false);
+       }
   };
 
   const handleResendToken = async () => {
     if (countdown > 0) return;
     
     setIsResending(true);
-    
-    gsap.to(".resend-icon", {
-      rotation: 360,
-      duration: 0.8,
-      ease: "power2.out"
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setToken(["", "", "", "", "", ""]);
-    setCountdown(30);
-    
-    if (inputRefs.current[0]) {
-      inputRefs.current[0].focus();
+    try{
+      const response = await axiosService.post(RESEND_VERIFICATION_CODE, { email });
+      // console.log(response);
+      toast.success(response?.data?.message || "Verification code resent successfully.");
     }
-    
-    setIsResending(false);
+    catch(error){
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to resend code. Please try again.");
+    }
+    finally{
+      setToken(["", "", "", "", "", ""]);
+      setCountdown(30);
+      setIsResending(false);
+      inputRefs.current[0]?.focus();
+    }
   };
 
   const isTokenComplete = token.every(digit => digit !== "");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md" ref={cardRef}>
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <Shield className="h-8 w-8 text-green-600" />
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 mx-auto mb-4 bg-green-50 rounded-full flex items-center justify-center">
+            <Shield className="h-10 w-10 text-green-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
-          <CardDescription className="text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            Verify Your Email
+          </h1>
+          <p className="text-gray-600">
             Enter the 6-digit code sent to
-            <span className="font-semibold text-green-700"> {email}</span>
-          </CardDescription>
-        </CardHeader>
+            <span className="font-semibold text-green-700 ml-1">{email}</span>
+          </p>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-6">
-              <div className="flex justify-center space-x-3">
-                {token.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={el => inputRefs.current[index] = el}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength="1"
-                    value={digit}
-                    onChange={(e) => handleChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="token-input w-14 h-14 text-center text-3xl font-bold rounded-xl border-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all border-gray-300"
-                  />
-                ))}
-              </div>
+        {/* Token Inputs */}
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-center gap-3 mb-8">
+            {token.map((digit, index) => (
+              <input
+                key={index}
+                ref={el => inputRefs.current[index] = el}
+                type="text"
+                inputMode="numeric"
+                maxLength="1"
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                className="w-14 h-14 text-center text-3xl font-bold border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition-colors"
+              />
+            ))}
+          </div>
 
-              <div className="text-center space-y-4">
-                <Button
-                  type="submit"
-                  className={`w-full py-6 text-lg font-semibold ${
-                    isTokenComplete
-                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                      : "bg-green-300 cursor-not-allowed"
-                  } text-white shadow-lg hover:shadow-xl transition-all duration-300`}
-                  disabled={!isTokenComplete || isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <RefreshCw className="h-5 w-5 animate-spin" />
-                      Verifying...
-                    </span>
-                  ) : (
-                    "Verify & Continue"
-                  )}
-                </Button>
-
-                <div className="text-gray-600">
-                  <p className="mb-2">Didn't receive the code?</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleResendToken}
-                    disabled={countdown > 0 || isResending}
-                    className="resend-button text-green-600 hover:text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg font-medium"
-                  >
-                    {isResending ? (
-                      <span className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin resend-icon" />
-                        Sending...
-                      </span>
-                    ) : countdown > 0 ? (
-                      `Resend in ${countdown}s`
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 resend-icon" />
-                        Resend Code
-                      </span>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-
-        <CardFooter className="flex justify-center border-t pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={!isTokenComplete || isLoading}
+            className={`w-full py-4 rounded-xl font-semibold text-lg mb-6 transition-all ${
+              isTokenComplete
+                ? "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
-            Back
-          </Button>
-        </CardFooter>
-      </Card>
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                Verifying...
+              </span>
+            ) : (
+              "Verify & Continue"
+            )}
+          </button>
+
+          {/* Resend Section */}
+          <div className="text-center">
+            <p className="text-gray-600 mb-3">Didn't receive the code?</p>
+            <button
+              type="button"
+              onClick={handleResendToken}
+              disabled={countdown > 0 || isResending}
+              className="text-green-600 hover:text-green-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              {isResending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Sending...
+                </span>
+              ) : countdown > 0 ? (
+                `Resend in ${countdown}s`
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Resend Code
+                </span>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Back Button */}
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-green-700 hover:text-green-800 font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-colors"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

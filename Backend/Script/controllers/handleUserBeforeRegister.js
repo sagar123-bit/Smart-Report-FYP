@@ -44,7 +44,7 @@ const handleUserBeforeRegister = async (req, res) => {
 
       return res.status(200).json({
         message: "Verification token resent",
-        user: checkValidation,
+        user: checkValidation?.email,
       });
     }
 
@@ -59,7 +59,7 @@ const handleUserBeforeRegister = async (req, res) => {
     await sendVerificationEmail(email, token);
     return res.status(201).json({
       message: "User stored successfully",
-      user: newUser,
+      user: newUser?.email,
     });
 
   } catch (error) {

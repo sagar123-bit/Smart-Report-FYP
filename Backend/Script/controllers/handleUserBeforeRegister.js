@@ -58,7 +58,7 @@ const handleUserBeforeRegister = async (req, res) => {
     });
     await sendVerificationEmail(email, token);
     return res.status(201).json({
-      message: "User stored successfully",
+      message: "Verify the email from token sent to your email",
       user: newUser?.email,
     });
 

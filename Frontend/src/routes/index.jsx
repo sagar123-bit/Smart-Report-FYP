@@ -116,7 +116,7 @@ const router = createBrowserRouter([{
             element:<VerifyToken/>
     },
     {
-        path:"changepassword",
+        path:"changepassword/:id",
         element:<ChangePassword/>
     },
     {

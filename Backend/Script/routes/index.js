@@ -4,6 +4,7 @@ import verifyUserAndCreateAccount from "../controllers/verifyTokenAndCreateUser.
 import loginUser from "../controllers/handleLogin.js";
 import resendVerificationCode from "../controllers/resendVerificationCode.js";
 import handleForgetPass from "../controllers/handleForgetPass.js";
+import handleResetPassword from "../controllers/handleResetPass.js";
 
 const authRouter= Router();
 
@@ -12,7 +13,7 @@ authRouter.post("/register",verifyUserAndCreateAccount);
 authRouter.post("/login",loginUser);
 authRouter.post("/resend-verification-code", resendVerificationCode);
 authRouter.post("/forget-password",handleForgetPass);
-authRouter.post("/reset-password",handleResetPass);
+authRouter.post("/reset-password",handleResetPassword);
 
 
 

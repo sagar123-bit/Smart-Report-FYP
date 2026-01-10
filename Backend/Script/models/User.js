@@ -80,18 +80,17 @@ const UserSchema = new Schema(
         return this.userType === "police";
       },
     },
-  },{
-    resetUrl:{
+    resetToken:{
       type:String,
       required:false,
       default:null,
-    }
-  },{
-    resetUrlExpires: {
+    },
+    resetTokenExpires: {
     type: Date,
     default: null,
     required: false,
-  }},
+  }
+  },
   { timestamps: true }
 );
 

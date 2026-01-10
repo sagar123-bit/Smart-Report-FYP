@@ -12,6 +12,9 @@ import {
   CardFooter
 } from "../components/ui/card";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import axiosService from "@/utils/axiosService";
+import { RESET_PASSWORD } from "@/routes/serverEndpoint";
+import { toast } from "react-toastify";
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -78,44 +81,45 @@ const ChangePassword = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+  e.preventDefault();
 
-    setIsLoading(true);
+  if (!validateForm()) {
+    return;
+  }
 
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/reset-password/${id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            newPassword: formData.password
-          }),
-        }
-      );
+  setIsLoading(true);
 
-      const data = await response.json();
+  try {
+    const response = await axiosService.post(RESET_PASSWORD, {
+      token: id,                 
+      newPassword: formData.password,
+    });
 
-      if (data.success) {
-        setIsSuccess(true);
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      } else {
-        setErrors({ submit: data.message || "Failed to change password" });
-      }
-    } catch (error) {
-      setErrors({ submit: "Failed to change password. Please try again." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    toast.success(
+      response?.data?.message || "Password updated successfully"
+    );
+
+    setIsSuccess(true);
+
+    setTimeout(() => {
+      navigate("/login");
+    }, 2000);
+  } catch (error) {
+    console.error(error);
+    setErrors({
+      submit:
+        error?.response?.data?.message ||
+        "Reset link is invalid or expired",
+    });
+    toast.error(
+      error?.response?.data?.message ||
+        "Reset link is invalid or expired"
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   if (!id) {
     return null;

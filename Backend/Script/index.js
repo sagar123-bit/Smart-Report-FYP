@@ -5,10 +5,10 @@ import connectToDB from './connect/index.js';
 import cookieParser from 'cookie-parser';
 import dotenv from "dotenv"
 dotenv.config();
-import authRouter from './routes/index.js';
+import authRouter from './routes/authRouter.js';
 import authMiddleware from './middleware/authMiddleware.js';
 import path from 'path';
-
+import userRouter from './routes/userRouter.js';
 
 
 const MONGO_URL=process.env.MONGODB_URL;
@@ -22,20 +22,21 @@ const runApp = async () => {
     const app = express();
     const server = http.createServer(app);
 
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: false }));
-    app.use(cookieParser());
-    app.use(express.static(path.resolve("./Script/uploads")));
-
     app.use(cors({
       origin: FRONTEND_URL,
       allowedHeaders:['Content-Type','Authorization'],
-        methods:["POST","GET","DELETE","PUT","PATCH"],
+      methods:["POST","GET","DELETE","PUT","PATCH"],
       credentials: true
     }));
+    app.use(express.json());
+    app.use(cookieParser());
+    app.use(express.urlencoded({ extended: false }));
+    app.use("/uploads",express.static(path.resolve("./Script/uploads")));
     app.use(authMiddleware);
     
     app.use("/api/auth",authRouter);
+    app.use("/api/user",userRouter);
+
 
     app.get("/userdata",(req,res)=>{
       return res.status(200).json({

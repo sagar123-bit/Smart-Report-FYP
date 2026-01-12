@@ -1,6 +1,7 @@
 
 const BASE_URL="/api"
 
+//auth routes
 export const USER_BEFORE_REGISTER=`${BASE_URL}/auth/user-before-register`;
 export const REGISTER=`${BASE_URL}/auth/register`;
 export const LOGIN=`${BASE_URL}/auth/login`;
@@ -12,4 +13,7 @@ export const RESET_PASSWORD=`${BASE_URL}/auth/reset-password`;
 export const GET_AUTH_USER=`${BASE_URL}/auth/get-auth-user`;
 export const LOGOUT=`${BASE_URL}/auth/logout`;
 
-export const USER_IMAGE=`${BASE_URL}/auth/user-image`;
+
+//user routes
+export const USER_IMAGE=`${BASE_URL}/user/user-image`;
+export const UPDATE_USER_PROFILE=`${BASE_URL}/user/update-profile`;

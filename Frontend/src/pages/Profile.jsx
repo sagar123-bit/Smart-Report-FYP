@@ -22,6 +22,7 @@ import { fetchAuthUser, logoutUser } from '@/store/slices/userSlice';
 import { useNavigate } from 'react-router';
 import axiosService from '@/utils/axiosService';
 import { USER_IMAGE } from '@/routes/serverEndpoint';
+import EditProfileDialog from '@/components/EditProfile';
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -29,6 +30,7 @@ const Profile = () => {
   const userData = useSelector(state => state?.user?.user);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
 
   const dummyStats = {
@@ -342,10 +344,21 @@ const Profile = () => {
             </Card>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Button className="h-12 gap-3 cursor-pointer" variant="outline">
-                <Edit className="h-4 w-4" />
-                Edit Profile Information
-              </Button>
+              <Button 
+        onClick={() => setIsEditDialogOpen(true)}
+        className="h-12 gap-3 cursor-pointer"
+        variant="outline"
+      >
+        <Edit className="h-4 w-4" />
+        Edit Profile Information
+      </Button>
+{
+  isEditDialogOpen &&
+      <EditProfileDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+      />
+}
               <Button className="h-12 gap-3 cursor-pointer">
                 <FileText className="h-4 w-4" />
                 View All Cases

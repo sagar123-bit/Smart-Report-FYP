@@ -17,3 +17,5 @@ export const LOGOUT=`${BASE_URL}/auth/logout`;
 //user routes
 export const USER_IMAGE=`${BASE_URL}/user/user-image`;
 export const UPDATE_USER_PROFILE=`${BASE_URL}/user/update-profile`;
+
+export const CREATE_CRIME_REPORT=`${BASE_URL}/user/crime-report`;

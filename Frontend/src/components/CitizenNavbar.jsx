@@ -162,7 +162,7 @@ const CitizenNavbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition duration-150">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={userData?.userImage} />
+                    <AvatarImage src={`${import.meta.env.VITE_SERVER_URL}/${userData.userImage}`} />
                     <AvatarFallback className="bg-blue-600 text-white">
                       {getAvatarInitial()}
                     </AvatarFallback>
@@ -277,7 +277,7 @@ const CitizenNavbar = () => {
               <div className="px-3 py-3 border-b border-gray-100">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userData?.userImage} />
+                    <AvatarImage src={`${import.meta.env.VITE_SERVER_URL}/${userData.userImage}`} />
                     <AvatarFallback className="bg-blue-600 text-white">
                       {getAvatarInitial()}
                     </AvatarFallback>

@@ -31,7 +31,7 @@ const runApp = async () => {
     app.use(express.json());
     app.use(cookieParser());
     app.use(express.urlencoded({ extended: false }));
-    app.use("/uploads",express.static(path.resolve("./Script/uploads")));
+    app.use(express.static(path.resolve("./Script/uploads/")));
     app.use(authMiddleware);
     
     app.use("/api/auth",authRouter);

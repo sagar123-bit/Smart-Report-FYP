@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router";
+import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -7,9 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from 'react-toastify';
+import axiosService from "@/utils/axiosService";
+import { CREATE_CRIME_REPORT } from "@/routes/serverEndpoint";
+import { X, Upload, File, Image, Video, FileText } from 'lucide-react';
 
 const ReportCrime = () => {
   const navigate = useNavigate();
+  const userData = useSelector(state => state?.user?.user);
   const [isLoading, setIsLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
   const mapRef = useRef(null);
@@ -18,26 +23,27 @@ const ReportCrime = () => {
   const [formData, setFormData] = useState({
     crimeType: "",
     description: "",
-    date: "",
-    time: "",
-    location: "",
+    incidentDate: "",
+    incidentTime: "",
+    locationAddress: "",
     latitude: "",
-    longitude: "",
-    evidence: null
+    longitude: ""
   });
 
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
+
   const crimeTypes = [
-    "Theft/Burglary",
-    "Assault",
-    "Fraud/Scam",
-    "Harassment",
-    "Cyber Crime",
-    "Drug Related",
-    "Domestic Violence",
-    "Public Disorder",
-    "Traffic Violation",
-    "Property Damage",
-    "Other"
+    { label: "Theft/Burglary", value: "theft/burglary" },
+    { label: "Assault", value: "assault" },
+    { label: "Fraud/Scam", value: "fraud/scam" },
+    { label: "Harassment", value: "harassment" },
+    { label: "Cyber Crime", value: "cyber-crime" },
+    { label: "Drug Related", value: "drug-related" },
+    { label: "Domestic Violence", value: "domestic-violence" },
+    { label: "Public Disorder", value: "public-disorder" },
+    { label: "Traffic Violation", value: "traffic-violation" },
+    { label: "Property Damage", value: "property-damage" },
+    { label: "Other", value: "other" }
   ];
 
   const getUserLocation = () => {
@@ -54,13 +60,13 @@ const ReportCrime = () => {
         const { latitude, longitude } = position.coords;
         setFormData(prev => ({
           ...prev,
-          latitude: latitude.toFixed(6),
-          longitude: longitude.toFixed(6)
+          latitude: latitude.toString(),
+          longitude: longitude.toString()
         }));
         
         localStorage.setItem('locationPermission', 'granted');
-        localStorage.setItem('userLatitude', latitude.toFixed(6));
-        localStorage.setItem('userLongitude', longitude.toFixed(6));
+        localStorage.setItem('userLatitude', latitude.toString());
+        localStorage.setItem('userLongitude', longitude.toString());
         
         toast.success("Your location detected successfully!");
         updateMapMarker(latitude, longitude);
@@ -152,8 +158,8 @@ const ReportCrime = () => {
       
       setFormData(prev => ({
         ...prev,
-        latitude: clickedLat.toFixed(6),
-        longitude: clickedLng.toFixed(6)
+        latitude: clickedLat.toString(),
+        longitude: clickedLng.toString()
       }));
 
       if (markerRef.current) {
@@ -178,8 +184,8 @@ const ReportCrime = () => {
     
     setFormData(prev => ({
       ...prev,
-      date: today,
-      time: now
+      incidentDate: today,
+      incidentTime: now
     }));
 
     const locationPermission = localStorage.getItem('locationPermission');
@@ -236,30 +242,139 @@ const ReportCrime = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size <= 10 * 1024 * 1024) {
-      setFormData(prev => ({ ...prev, evidence: file }));
-    } else {
-      toast.error("File size must be less than 10MB");
+    const files = Array.from(e.target.files);
+    
+    if (evidenceFiles.length + files.length > 5) {
+      toast.error("Maximum 5 files allowed");
+      return;
     }
+
+    const validFiles = [];
+    const invalidFiles = [];
+
+    files.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        invalidFiles.push(file.name);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.error(`${invalidFiles.length} file(s) exceed 10MB limit: ${invalidFiles.join(', ')}`);
+    }
+
+    if (validFiles.length > 0) {
+      setEvidenceFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const removeFile = (index) => {
+    setEvidenceFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (file) => {
+    if (file.type.startsWith('image/')) return <Image className="h-4 w-4" />;
+    if (file.type.startsWith('video/')) return <Video className="h-4 w-4" />;
+    if (file.type === 'application/pdf') return <FileText className="h-4 w-4" />;
+    if (file.type.startsWith('audio/')) return <File className="h-4 w-4" />;
+    return <File className="h-4 w-4" />;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
+    if (!userData?._id) {
+      toast.error("You must be logged in to submit a report");
+      setIsLoading(false);
+      return;
+    }
+
     if (!formData.latitude || !formData.longitude) {
       toast.error("Please select a location on the map");
       setIsLoading(false);
       return;
     }
+
+    if (!formData.crimeType) {
+      toast.error("Please select a crime type");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.description) {
+      toast.error("Please provide a description");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.incidentDate || !formData.incidentTime) {
+      toast.error("Please provide date and time of incident");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.locationAddress) {
+      toast.error("Please provide location address");
+      setIsLoading(false);
+      return;
+    }
+
+    const formDataToSend = new FormData();
     
-    console.log("Submitting report:", formData);
+    formDataToSend.append('crimeType', formData.crimeType);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('incidentDate', formData.incidentDate);
+    formDataToSend.append('incidentTime', formData.incidentTime);
+    formDataToSend.append('locationAddress', formData.locationAddress);
+    formDataToSend.append('latitude', formData.latitude);
+    formDataToSend.append('longitude', formData.longitude);
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    navigate("/dashboard");
-    setIsLoading(false);
+    evidenceFiles.forEach((file, index) => {
+      formDataToSend.append('evidences', file);
+    });
+
+    try {
+      const response = await axiosService.post(CREATE_CRIME_REPORT, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      });
+      
+      toast.success(response?.data?.message || "Report submitted successfully!");
+      
+      setEvidenceFiles([]);
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+      
+      setFormData({
+        crimeType: "",
+        description: "",
+        incidentDate: today,
+        incidentTime: now,
+        locationAddress: "",
+        latitude: "",
+        longitude: ""
+      });
+      
+      navigate("/myreport");
+    } catch (error) {
+      console.log("Report submission error:", error);
+      toast.error(
+        error?.response?.data?.message || 
+        "Failed to submit report. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEmergency = () => {
@@ -317,7 +432,7 @@ const ReportCrime = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <Label htmlFor="crimeType">Crime Type</Label>
+                <Label htmlFor="crimeType">Crime Type *</Label>
                 <Select
                   value={formData.crimeType}
                   onValueChange={(value) => handleChange("crimeType", value)}
@@ -327,8 +442,8 @@ const ReportCrime = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {crimeTypes.map((type) => (
-                      <SelectItem key={type} value={type.toLowerCase().replace(/\s+/g, '-')}>
-                        {type}
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -336,7 +451,7 @@ const ReportCrime = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
                   placeholder="Provide detailed description of the incident..."
@@ -349,23 +464,23 @@ const ReportCrime = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="incidentDate">Date *</Label>
                   <Input
-                    id="date"
+                    id="incidentDate"
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => handleChange("date", e.target.value)}
+                    value={formData.incidentDate}
+                    onChange={(e) => handleChange("incidentDate", e.target.value)}
                     required
                     className="cursor-text"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Time</Label>
+                  <Label htmlFor="incidentTime">Time *</Label>
                   <Input
-                    id="time"
+                    id="incidentTime"
                     type="time"
-                    value={formData.time}
-                    onChange={(e) => handleChange("time", e.target.value)}
+                    value={formData.incidentTime}
+                    onChange={(e) => handleChange("incidentTime", e.target.value)}
                     required
                     className="cursor-text"
                   />
@@ -374,12 +489,12 @@ const ReportCrime = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="location">Location Address</Label>
+                  <Label htmlFor="locationAddress">Location Address *</Label>
                   <Input
-                    id="location"
+                    id="locationAddress"
                     placeholder="Enter location address"
-                    value={formData.location}
-                    onChange={(e) => handleChange("location", e.target.value)}
+                    value={formData.locationAddress}
+                    onChange={(e) => handleChange("locationAddress", e.target.value)}
                     required
                     className="cursor-text mt-2"
                   />
@@ -387,7 +502,7 @@ const ReportCrime = () => {
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Select Crime Location on Map</Label>
+                    <Label>Select Crime Location on Map *</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -403,7 +518,7 @@ const ReportCrime = () => {
                     Click on the map to mark the exact crime location
                   </p>
                   
-                  <div id="map" className="h-[400px] border rounded-lg">
+                  <div id="map" className="h-[400px] border rounded-lg z-10 relative">
                     {locationLoading && (
                       <div className="h-full flex items-center justify-center bg-gray-100">
                         <div className="text-center">
@@ -416,7 +531,7 @@ const ReportCrime = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="space-y-2">
-                      <Label>Latitude</Label>
+                      <Label>Latitude *</Label>
                       <Input
                         value={formData.latitude || "Select location..."}
                         readOnly
@@ -424,7 +539,7 @@ const ReportCrime = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Longitude</Label>
+                      <Label>Longitude *</Label>
                       <Input
                         value={formData.longitude || "Select location..."}
                         readOnly
@@ -446,34 +561,77 @@ const ReportCrime = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Upload Evidence</Label>
+              <div className="space-y-4">
+                <Label>Upload Evidence (Optional - Max 5 files, 10MB each)</Label>
+                
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <input
                     type="file"
-                    id="evidence"
+                    id="evidenceFiles"
                     onChange={handleFileChange}
-                    accept="image/*,video/*,audio/*,.pdf"
+                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
                     className="hidden"
+                    multiple
                   />
                   <label
-                    htmlFor="evidence"
+                    htmlFor="evidenceFiles"
                     className="cursor-pointer flex flex-col items-center"
                   >
-                    <div className="text-4xl mb-4">📎</div>
+                    <Upload className="h-12 w-12 text-gray-400 mb-4" />
                     <p className="text-lg font-medium mb-2">
                       Click to upload or drag and drop
                     </p>
                     <p className="text-sm text-gray-500 mb-2">
-                      Images, Videos, Audio, PDF (Max 10MB each)
+                      Images, Videos, Audio, Documents (Max 10MB each)
                     </p>
-                    {formData.evidence && (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {formData.evidence.name}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-400">
+                      {evidenceFiles.length}/5 files selected
+                    </p>
                   </label>
                 </div>
+
+                {evidenceFiles.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Selected Files
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {evidenceFiles.length} file(s)
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {evidenceFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            {getFileIcon(file)}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                {file.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(file.size)}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">

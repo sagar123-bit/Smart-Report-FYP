@@ -1,38 +1,113 @@
-import React from 'react'
+import React, { useState, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { 
   User, 
   Mail, 
   Phone, 
   MapPin, 
   FileText, 
-  Clock, 
   CheckCircle,
   LogOut,
   Edit,
-  Building,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Trash2,
+  Camera
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'react-toastify';
+import { fetchAuthUser, logoutUser } from '@/store/slices/userSlice';
+import { useNavigate } from 'react-router';
+import axiosService from '@/utils/axiosService';
+import { USER_IMAGE } from '@/routes/serverEndpoint';
 
 const Profile = () => {
-  //demo data for user
-  const userData = {
-    name: 'John Doe',
-    role: 'Citizen',
-    email: 'john.doe@example.com',
-    phoneNumber: '',
-    province: 'Central Province',
-    district: 'Colombo District',
-    municipality: 'Colombo Municipal Council',
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const userData = useSelector(state => state?.user?.user);
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+
+  const dummyStats = {
     totalCases: 24,
     pendingCases: 5,
     resolvedCases: 19,
-    loginTime: 'Last login: 2 hours ago'
   };
 
-  const hasPhoneNumber = userData.phoneNumber && userData.phoneNumber.trim() !== '';
+  const hasPhoneNumber = userData?.phoneNumber && userData.phoneNumber.trim() !== '';
+  const hasProfileImage = userData?.userImage;
+  
+  const getInitials = () => {
+    if (userData?.userName) {
+      return userData.userName.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
+  const handleEditImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const formData = new FormData();
+    formData.append('userImage', file);
+
+    try {
+      const response = await axiosService.post(USER_IMAGE, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true,
+      });
+      if(response.status===200){
+        await dispatch(fetchAuthUser());
+        toast.success(response?.data?.message||hasProfileImage ? 'Profile image updated!' : 'Profile image set!');
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message||'Failed to upload image. Please try again.');
+    } finally {
+      setIsLoading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!hasProfileImage) return;
+    setIsLoading(true);
+    try {
+      const response = await axiosService.delete(USER_IMAGE, { withCredentials: true });
+      await dispatch(fetchAuthUser());
+      toast.success(response?.data?.message||'Profile image deleted!');
+    } catch (error) {
+      toast.error(error?.response?.data?.message||'Failed to delete image. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    await dispatch(fetchAuthUser());
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
@@ -47,20 +122,75 @@ const Profile = () => {
             <Card className="shadow-lg border-gray-200">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center text-center mb-6">
-                  <div className="relative mb-4 cursor-pointer">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                      <User className="h-12 w-12 text-white" />
-                    </div>
-                    <button className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border hover:bg-gray-50 transition-colors cursor-pointer">
-                      <Edit className="h-4 w-4 text-gray-700" />
-                    </button>
+                  <div className="relative mb-4">
+                    {hasProfileImage ? (
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
+                        <img 
+                          src={`${import.meta.env.VITE_SERVER_URL}/${userData.userImage}`} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg mb-4">
+                        <span className="text-2xl font-bold text-white">
+                          {getInitials()}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900">{userData.name}</h2>
+                  
+                  <h2 className="text-2xl font-bold text-gray-900">{userData?.userName || 'User Name'}</h2>
                   <div className="inline-flex items-center gap-2 mt-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
                     <User className="h-3 w-3" />
-                    {userData.role}
+                    {userData?.userType || 'Citizen'}
                   </div>
-                  <p className="text-gray-500 text-sm mt-2">{userData.loginTime}</p>
+                  
+                  <div className="mt-6 space-y-3">
+                    <Button
+                      onClick={handleEditImageClick}
+                      variant={hasProfileImage ? "default" : "outline"}
+                      disabled={isLoading}
+                      className="gap-2 cursor-pointer w-full"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : hasProfileImage ? (
+                        <>
+                          <Camera className="h-4 w-4" />
+                          Change Profile Image
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          Set Profile Image
+                        </>
+                      )}
+                    </Button>
+                    
+                    {hasProfileImage && (
+                      <Button
+                        onClick={handleDeleteImage}
+                        disabled={isLoading}
+                        variant="destructive"
+                        className="gap-2 cursor-pointer w-full"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Profile Image
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <Separator className="my-6" />
@@ -70,7 +200,7 @@ const Profile = () => {
                     <Mail className="h-4 w-4" />
                     Email
                   </h3>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{userData.email}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{userData?.email || 'user@example.com'}</p>
 
                   <h3 className="font-semibold text-gray-700 flex items-center gap-2 mt-4">
                     <Phone className="h-4 w-4" />
@@ -95,7 +225,11 @@ const Profile = () => {
                 </div>
 
                 <div className="mt-8">
-                  <Button variant="outline" className="w-full gap-2 hover:bg-red-50 hover:text-red-600 cursor-pointer">
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                    onClick={handleLogout}
+                  >
                     <LogOut className="h-4 w-4" />
                     Logout
                   </Button>
@@ -105,7 +239,6 @@ const Profile = () => {
           </div>
 
           <div className="lg:w-2/3 space-y-8">
-
             <Card className="shadow-lg border-gray-200">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
@@ -117,14 +250,14 @@ const Profile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div className="cursor-pointer hover:shadow-sm transition-shadow">
                     <label className="block text-sm font-medium text-gray-600 mb-2">
                       Province
                     </label>
                     <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
                       <MapPin className="h-5 w-5 text-blue-600" />
-                      <span className="text-gray-900 font-medium">{userData.province}</span>
+                      <span className="text-gray-900 font-medium">{userData?.province || 'Not set'}</span>
                     </div>
                   </div>
                 
@@ -134,17 +267,7 @@ const Profile = () => {
                     </label>
                     <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                       <MapPin className="h-5 w-5 text-green-600" />
-                      <span className="text-gray-900 font-medium">{userData.district}</span>
-                    </div>
-                  </div>
-                
-                  <div className="cursor-pointer hover:shadow-sm transition-shadow">
-                    <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Municipality
-                    </label>
-                    <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors">
-                      <Building className="h-5 w-5 text-purple-600" />
-                      <span className="text-gray-900 font-medium">{userData.municipality}</span>
+                      <span className="text-gray-900 font-medium">{userData?.district || 'Not set'}</span>
                     </div>
                   </div>
                 </div>
@@ -163,65 +286,60 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-6">
-            
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-gray-200 rounded-lg">
                         <FileText className="h-6 w-6 text-gray-700" />
                       </div>
-                      <span className="text-3xl font-bold text-gray-900">{userData.totalCases}</span>
+                      <span className="text-3xl font-bold text-gray-900">{dummyStats.totalCases}</span>
                     </div>
                     <h4 className="text-gray-600 font-medium">Total Cases</h4>
                     <p className="text-gray-500 text-sm mt-1">All cases registered</p>
                   </div>
 
-  
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-amber-200 rounded-lg">
-                        <Clock className="h-6 w-6 text-amber-700" />
+                        <FileText className="h-6 w-6 text-amber-700" />
                       </div>
-                      <span className="text-3xl font-bold text-amber-900">{userData.pendingCases}</span>
+                      <span className="text-3xl font-bold text-amber-900">{dummyStats.pendingCases}</span>
                     </div>
                     <h4 className="text-gray-600 font-medium">Pending Cases</h4>
                     <p className="text-gray-500 text-sm mt-1">Awaiting resolution</p>
                   </div>
 
-                 
                   <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-emerald-200 rounded-lg">
                         <CheckCircle className="h-6 w-6 text-emerald-700" />
                       </div>
-                      <span className="text-3xl font-bold text-emerald-900">{userData.resolvedCases}</span>
+                      <span className="text-3xl font-bold text-emerald-900">{dummyStats.resolvedCases}</span>
                     </div>
                     <h4 className="text-gray-600 font-medium">Resolved</h4>
                     <p className="text-gray-500 text-sm mt-1">Successfully closed</p>
                   </div>
                 </div>
 
-        
                 <div className="mt-8">
                   <div className="flex justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Case Resolution Progress</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {Math.round((userData.resolvedCases / userData.totalCases) * 100)}%
+                      {Math.round((dummyStats.resolvedCases / dummyStats.totalCases) * 100)}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 cursor-pointer">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${(userData.resolvedCases / userData.totalCases) * 100}%` }}
+                      style={{ width: `${(dummyStats.resolvedCases / dummyStats.totalCases) * 100}%` }}
                     ></div>
                   </div>
                   <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>{userData.pendingCases} pending</span>
-                    <span>{userData.resolvedCases} resolved</span>
+                    <span>{dummyStats.pendingCases} pending</span>
+                    <span>{dummyStats.resolvedCases} resolved</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
 
             <div className="grid md:grid-cols-2 gap-6">
               <Button className="h-12 gap-3 cursor-pointer" variant="outline">

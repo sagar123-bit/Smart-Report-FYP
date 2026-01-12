@@ -12,7 +12,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from './ui/avatar';
-import { ChevronDown, Globe, Check, User, LogOut, Home, UserCircle } from 'lucide-react';
+import { ChevronDown, Globe, Check, User, LogOut, Home, UserCircle, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router';
 import { useSelector, useDispatch } from 'react-redux';
@@ -24,11 +24,19 @@ const CitizenNavbar = () => {
   const dispatch = useDispatch();
 
   const userData = useSelector(state => state?.user?.user);
-  // console.log("User Data in Navbar:", userData);
   
-  const navItems = [
+  const baseNavItems = [
     { id: 1, name: 'Home', path: '/' },
     { id: 2, name: 'About', path: '/about' },
+  ];
+
+  const authNavItems = [
+    { id: 3, name: 'Report Crime', path: '/reportcrime', icon: <FileText className="h-4 w-4 mr-2" /> },
+  ];
+
+  const navItems = [
+    ...baseNavItems,
+    ...(userData ? authNavItems : [])
   ];
 
   const languages = [
@@ -109,12 +117,13 @@ const CitizenNavbar = () => {
               <a
                 key={item.id}
                 href={item.path}
-                className={`px-3 py-2 text-sm font-medium transition duration-150 relative group ${
+                className={`px-3 py-2 text-sm font-medium transition duration-150 relative group flex items-center ${
                   isActivePath(item.path)
                     ? 'text-blue-600'
                     : 'text-gray-700 hover:text-blue-600'
                 }`}
               >
+                {item.icon && item.icon}
                 {item.name}
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transition-all duration-300 ${
                   isActivePath(item.path) ? 'w-full' : 'w-0 group-hover:w-full'
@@ -153,7 +162,7 @@ const CitizenNavbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition duration-150">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={userData?.imageUrl} />
+                    <AvatarImage src={userData?.userImage} />
                     <AvatarFallback className="bg-blue-600 text-white">
                       {getAvatarInitial()}
                     </AvatarFallback>
@@ -224,12 +233,13 @@ const CitizenNavbar = () => {
               key={item.id}
               href={item.path}
               onClick={closeMenu}
-              className={`block px-3 py-3 rounded-md text-base font-medium transition duration-150 border-b border-gray-100 ${
+              className={`block px-3 py-3 rounded-md text-base font-medium transition duration-150 border-b border-gray-100 flex items-center ${
                 isActivePath(item.path)
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
               }`}
             >
+              {item.icon && item.icon}
               {item.name}
             </a>
           ))}
@@ -267,7 +277,7 @@ const CitizenNavbar = () => {
               <div className="px-3 py-3 border-b border-gray-100">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userData?.imageUrl} />
+                    <AvatarImage src={userData?.userImage} />
                     <AvatarFallback className="bg-blue-600 text-white">
                       {getAvatarInitial()}
                     </AvatarFallback>

@@ -7,6 +7,7 @@ import dotenv from "dotenv"
 dotenv.config();
 import authRouter from './routes/index.js';
 import authMiddleware from './middleware/authMiddleware.js';
+import path from 'path';
 
 
 
@@ -24,6 +25,7 @@ const runApp = async () => {
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
     app.use(cookieParser());
+    app.use(express.static(path.resolve("./Script/uploads")));
 
     app.use(cors({
       origin: FRONTEND_URL,

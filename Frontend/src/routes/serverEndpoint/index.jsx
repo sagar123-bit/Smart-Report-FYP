@@ -11,3 +11,5 @@ export const RESET_PASSWORD=`${BASE_URL}/auth/reset-password`;
 
 export const GET_AUTH_USER=`${BASE_URL}/auth/get-auth-user`;
 export const LOGOUT=`${BASE_URL}/auth/logout`;
+
+export const USER_IMAGE=`${BASE_URL}/auth/user-image`;

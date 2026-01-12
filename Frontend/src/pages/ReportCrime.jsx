@@ -58,12 +58,16 @@ const ReportCrime = () => {
           longitude: longitude.toFixed(6)
         }));
         
+        localStorage.setItem('locationPermission', 'granted');
+        localStorage.setItem('userLatitude', latitude.toFixed(6));
+        localStorage.setItem('userLongitude', longitude.toFixed(6));
+        
         toast.success("Your location detected successfully!");
         updateMapMarker(latitude, longitude);
         setLocationLoading(false);
       },
       (error) => {
-        console.log("Location error:", error);
+        localStorage.setItem('locationPermission', 'denied');
         
         switch(error.code) {
           case error.PERMISSION_DENIED:
@@ -178,19 +182,37 @@ const ReportCrime = () => {
       time: now
     }));
 
-    const askForLocation = () => {
-      if (window.confirm("Allow SmartReport to access your location for accurate crime reporting?")) {
-        getUserLocation();
-      } else {
-        toast.info("Using default Ithari location. You can click on map to select location.");
-        setDefaultIthariLocation();
-        setLocationLoading(false);
-      }
-    };
+    const locationPermission = localStorage.getItem('locationPermission');
+    const savedLat = localStorage.getItem('userLatitude');
+    const savedLng = localStorage.getItem('userLongitude');
 
-    setTimeout(() => {
-      askForLocation();
-    }, 500);
+    if (locationPermission === 'granted' && savedLat && savedLng) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: savedLat,
+        longitude: savedLng
+      }));
+      setLocationLoading(false);
+    } else if (locationPermission === 'denied') {
+      toast.info("Using default Ithari location. You can click on map to select location.");
+      setDefaultIthariLocation();
+      setLocationLoading(false);
+    } else {
+      const askForLocation = () => {
+        if (window.confirm("Allow SmartReport to access your location for accurate crime reporting?")) {
+          getUserLocation();
+        } else {
+          localStorage.setItem('locationPermission', 'denied');
+          toast.info("Using default Ithari location. You can click on map to select location.");
+          setDefaultIthariLocation();
+          setLocationLoading(false);
+        }
+      };
+
+      setTimeout(() => {
+        askForLocation();
+      }, 500);
+    }
 
     return () => {
       if (mapRef.current) {
@@ -245,7 +267,33 @@ const ReportCrime = () => {
   };
 
   const handleUseMyLocation = () => {
-    getUserLocation();
+    const locationPermission = localStorage.getItem('locationPermission');
+    
+    if (locationPermission === 'granted') {
+      const savedLat = localStorage.getItem('userLatitude');
+      const savedLng = localStorage.getItem('userLongitude');
+      
+      if (savedLat && savedLng) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: savedLat,
+          longitude: savedLng
+        }));
+        updateMapMarker(parseFloat(savedLat), parseFloat(savedLng));
+        toast.success("Using your saved location!");
+      } else {
+        getUserLocation();
+      }
+    } else if (locationPermission === 'denied') {
+      if (window.confirm("Location permission was previously denied. Would you like to allow location access now?")) {
+        localStorage.removeItem('locationPermission');
+        getUserLocation();
+      } else {
+        toast.info("You can click on map to select location manually.");
+      }
+    } else {
+      getUserLocation();
+    }
   };
 
   return (

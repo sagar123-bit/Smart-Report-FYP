@@ -307,6 +307,19 @@ const ReportCrime = () => {
       return;
     }
 
+    if (isEditMode) {
+      const availableSlotsForEdit = removedEvidencePaths.length;
+      if (evidenceFiles.length + files.length > availableSlotsForEdit) {
+        toast.error(`You can only add ${availableSlotsForEdit - evidenceFiles.length} more file(s) as replacement.`);
+        return;
+      }
+    } else {
+      if (evidenceFiles.length + files.length > 5) {
+        toast.error(`You can only add ${5 - evidenceFiles.length} more file(s).`);
+        return;
+      }
+    }
+
     const validFiles = [];
     const invalidFiles = [];
 
@@ -544,7 +557,7 @@ const ReportCrime = () => {
 
   const keptExistingFiles = existingEvidencePaths.length - removedEvidencePaths.length;
   const totalCurrentFiles = keptExistingFiles + evidenceFiles.length;
-  const canAddMoreFiles = totalCurrentFiles < 5;
+  const canAddMoreFiles = isEditMode ? evidenceFiles.length < removedEvidencePaths.length : totalCurrentFiles < 5;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -809,7 +822,7 @@ const ReportCrime = () => {
                     </div>
                     {removedEvidencePaths.length > 0 && (
                       <p className="text-xs text-green-600 mt-2">
-                        {removedEvidencePaths.length} file(s) marked for removal
+                        {removedEvidencePaths.length} file(s) marked for removal. You can upload {removedEvidencePaths.length} new file(s) as replacement.
                       </p>
                     )}
                   </div>
@@ -836,7 +849,7 @@ const ReportCrime = () => {
                       {canAddMoreFiles ? "Click to upload or drag and drop" : "Maximum files reached"}
                     </p>
                     <p className="text-sm text-gray-500 mb-2">
-                      Images, Videos, Audio, Documents (Max 10MB each)
+                      Images (Max 10MB each)
                     </p>
                     <p className="text-sm text-gray-400">
                       {evidenceFiles.length} new file(s) uploaded
@@ -844,6 +857,16 @@ const ReportCrime = () => {
                         `, ${keptExistingFiles} existing file(s) kept`
                       }
                     </p>
+                    {isEditMode && removedEvidencePaths.length > 0 && evidenceFiles.length < removedEvidencePaths.length && (
+                      <p className="text-sm text-green-600 mt-2">
+                        You can upload {removedEvidencePaths.length - evidenceFiles.length} more file(s)
+                      </p>
+                    )}
+                    {!isEditMode && evidenceFiles.length < 5 && (
+                      <p className="text-sm text-green-600 mt-2">
+                        You can upload {5 - evidenceFiles.length} more file(s)
+                      </p>
+                    )}
                     {totalCurrentFiles >= 5 && (
                       <p className="text-sm text-red-500 mt-2">
                         Maximum 5 files reached.

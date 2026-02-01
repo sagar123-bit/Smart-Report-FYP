@@ -84,7 +84,7 @@ const crimeReportSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "under-investigation", "resolved", "rejected"],
+      enum: ["pending", "in-progress", "resolved", "rejected"],
       default: "pending",
     },
 

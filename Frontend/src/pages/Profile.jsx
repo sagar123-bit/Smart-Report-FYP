@@ -18,7 +18,8 @@ import {
   Phone,
   Trash2,
   Upload,
-  User
+  User,
+  XCircle
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,6 +44,7 @@ const Profile = () => {
     pendingCases: userReports.filter(report => report.status === 'pending').length,
     inProgressCases: userReports.filter(report => report.status === 'in progress').length,
     resolvedCases: userReports.filter(report => report.status === 'resolved').length,
+    rejectedCases: userReports.filter(report => report.status === 'rejected').length,
   };
 
   const hasPhoneNumber = userData?.phoneNumber && userData.phoneNumber.trim() !== '';
@@ -293,7 +295,7 @@ const Profile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-4 gap-6">
+                <div className="grid md:grid-cols-5 gap-4">
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-gray-200 rounded-lg">
@@ -336,6 +338,17 @@ const Profile = () => {
                     </div>
                     <h4 className="text-gray-600 font-medium">Resolved</h4>
                     <p className="text-gray-500 text-sm mt-1">Successfully closed</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-red-200 rounded-lg">
+                        <XCircle className="h-6 w-6 text-red-700" />
+                      </div>
+                      <span className="text-3xl font-bold text-red-900">{userStats.rejectedCases}</span>
+                    </div>
+                    <h4 className="text-gray-600 font-medium">Rejected</h4>
+                    <p className="text-gray-500 text-sm mt-1">Cases not accepted</p>
                   </div>
                 </div>
 

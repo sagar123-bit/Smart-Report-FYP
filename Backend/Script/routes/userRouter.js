@@ -21,6 +21,6 @@ userRouter.delete("/crime-report/:reportId",CrimeReportController.deleteReport);
 userRouter.get("/get-all-users",getAllUsers);
 userRouter.get("/get-all-reports",getAllCrimeReports);
 userRouter.patch("/update-user-report/:reportId",uploadCrimeEvidence.array("evidences", 5),CrimeReportController.updateReport);
-
+userRouter.delete("/delete-report/:reportId",CrimeReportController.deleteReport);
 
 export default userRouter;

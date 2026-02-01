@@ -1,7 +1,7 @@
-// MyReports.jsx (updated)
-import { AlertCircle, CheckCircle, Clock, Edit, Eye, FileText, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import ReportDetailDrawer from '@/components/ReportDetailsDrawer';
+import { AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Eye, FileText, Search, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -9,10 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import ReportDetailDrawer from '@/components/ReportDetailsDrawer';
+import axiosService from '@/utils/axiosService';
+import { DELETE_CRIME_REPORT } from '@/routes/serverEndpoint';
+import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
+import { toast } from 'react-toastify';
 
 const MyReports = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const userState = useSelector(state => state?.user);
   const crimeReportsState = useSelector(state=>state?.allReports);
   const { user } = userState || {};
@@ -38,6 +42,7 @@ const MyReports = () => {
     pending: userReports.filter(r => r.status === "pending").length,
     inProgress: userReports.filter(r => r.status === "in progress").length,
     resolved: userReports.filter(r => r.status === "resolved").length,
+    rejected: userReports.filter(r => r.status === "rejected").length,
   };
 
   useEffect(() => {
@@ -91,6 +96,8 @@ const MyReports = () => {
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
       case "resolved":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Resolved</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -104,6 +111,8 @@ const MyReports = () => {
         return <Badge variant="destructive">High</Badge>;
       case "resolved":
         return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Low</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200">N/A</Badge>;
       default:
         return <Badge variant="outline">N/A</Badge>;
     }
@@ -138,12 +147,21 @@ const MyReports = () => {
   };
 
   const handleUpdateReport = (reportId) => {
-    // Navigate to ReportCrime page with reportId parameter for editing
     navigate(`/reportcrime?edit=${reportId}`);
   };
 
-  const handleDeleteReport = (reportId) => {
-    console.log("Delete report:", reportId);
+  const handleDeleteReport = async (reportId) => {
+    try{
+      const response = await axiosService.delete(`${DELETE_CRIME_REPORT}/${reportId}`,{withCredentials:true});
+      if(response?.status===200){
+        await dispatch(fetchAllCrimeReports());
+        toast.success(response?.data?.message||"Report deleted successfully");
+      }
+    }
+    catch(error){
+      console.error("Error deleting report:", error);
+      toast.error(error?.response?.data?.message || "Failed to delete report");
+    }
   };
 
   const clearDateFilter = () => {
@@ -222,7 +240,7 @@ const MyReports = () => {
             <p className="text-gray-600">Track and manage all your submitted crime reports</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -278,6 +296,20 @@ const MyReports = () => {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Rejected</p>
+                    <p className="text-3xl font-bold mt-2">{stats.rejected}</p>
+                  </div>
+                  <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <XCircle className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <Card>
@@ -306,6 +338,7 @@ const MyReports = () => {
                     <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
                     <TabsTrigger value="in progress">In Progress ({stats.inProgress})</TabsTrigger>
                     <TabsTrigger value="resolved">Resolved ({stats.resolved})</TabsTrigger>
+                    <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
                   </TabsList>
                   
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -349,7 +382,7 @@ const MyReports = () => {
                   </div>
                 </div>
 
-                {["all", "pending", "in progress", "resolved"].map((tab) => (
+                {["all", "pending", "in progress", "resolved", "rejected"].map((tab) => (
                   <TabsContent key={tab} value={tab} className="mt-0">
                     {isLoading ? (
                       <div className="text-center py-12">
@@ -367,8 +400,10 @@ const MyReports = () => {
                                 <Clock className="h-8 w-8 text-gray-400" />
                               ) : tab === "in progress" ? (
                                 <AlertCircle className="h-8 w-8 text-gray-400" />
-                              ) : (
+                              ) : tab === "resolved" ? (
                                 <CheckCircle className="h-8 w-8 text-gray-400" />
+                              ) : (
+                                <XCircle className="h-8 w-8 text-gray-400" />
                               )}
                             </div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -457,6 +492,17 @@ const MyReports = () => {
                                                   </Button>
                                                 </>
                                               )}
+                                              {report.status === "rejected" && (
+                                                <Button
+                                                  variant="destructive"
+                                                  size="sm"
+                                                  onClick={() => handleDeleteReport(report._id)}
+                                                  className="cursor-pointer"
+                                                >
+                                                  <Trash2 className="h-4 w-4 mr-2" />
+                                                  Delete
+                                                </Button>
+                                              )}
                                             </div>
                                           </TableCell>
                                         </TableRow>
@@ -486,7 +532,7 @@ const MyReports = () => {
                                                 <Eye className="h-4 w-4 mr-2" />
                                                 View
                                               </Button>
-                                              {report.status === "pending" && (
+                                              {tab === "pending" && (
                                                 <>
                                                   <Button
                                                     variant="outline"
@@ -507,6 +553,17 @@ const MyReports = () => {
                                                     Delete
                                                   </Button>
                                                 </>
+                                              )}
+                                              {tab === "rejected" && (
+                                                <Button
+                                                  variant="destructive"
+                                                  size="sm"
+                                                  onClick={() => handleDeleteReport(report._id)}
+                                                  className="cursor-pointer"
+                                                >
+                                                  <Trash2 className="h-4 w-4 mr-2" />
+                                                  Delete
+                                                </Button>
                                               )}
                                             </div>
                                           </TableCell>

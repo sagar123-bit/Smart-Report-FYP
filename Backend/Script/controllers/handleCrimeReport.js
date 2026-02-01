@@ -141,51 +141,63 @@ class CrimeReportController {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+static deleteReport = async (req, res) => {
+  try {
+    const authUser = req.user;
+    const { reportId } = req.params;
 
+    if (!authUser) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  static deleteReport = async (req, res) => {
-    try {
-      const authUser = req.user;
-      const { reportId } = req.params;
+    const report = await CrimeReport.findOne({ _id:reportId });
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
 
-      if (!authUser) return res.status(401).json({ message: "Unauthorized" });
+    const status = report.status;
 
-      const report = await CrimeReport.findOne({ reportId });
-      if (!report) return res.status(404).json({ message: "Report not found" });
-
-
-      if (authUser.userType === "citizen") {
-        if (!["pending", "rejected"].includes(report.status)) {
-          return res.status(403).json({ message: "You cannot delete reports under investigation or resolved" });
-        }
-        if (report.reportedBy.toString() !== authUser._id.toString()) {
-          return res.status(403).json({ message: "Forbidden" });
-        }
-      }
-
-
-      if (authUser.userType === "admin") {
-        if (report.status === "under-investigation") {
-          return res.status(403).json({ message: "Cannot delete reports under investigation" });
-        }
-      }
-
-
-      if (report.evidenceUrls && report.evidenceUrls.length > 0) {
-        report.evidenceUrls.forEach(evidencePath => {
-          const fullPath = path.resolve(`./Script/uploads/${evidencePath}`);
-          if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    if (authUser.userType === "citizen") {
+      if (!["pending", "rejected"].includes(status)) {
+        return res.status(403).json({
+          message: "You are not allowed to delete this report",
         });
       }
 
-      await report.remove();
-
-      return res.status(200).json({ message: "Crime report deleted successfully" });
-    } catch (error) {
-      console.error("Delete Report Error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      if (report.reportedBy.toString() !== authUser._id.toString()) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
     }
-  };
+
+    if (authUser.userType === "admin") {
+      if (status === "in-progress") {
+        return res.status(403).json({
+          message: "Cannot delete report under investigation",
+        });
+      }
+    }
+
+    if (report.evidenceUrls?.length > 0) {
+      report.evidenceUrls.forEach((evidencePath) => {
+        const fullPath = path.resolve(`./Script/uploads/${evidencePath}`);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    }
+
+    await report.deleteOne();
+
+    return res.status(200).json({
+      message: "Crime report deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete Report Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 }
 
 export default CrimeReportController;

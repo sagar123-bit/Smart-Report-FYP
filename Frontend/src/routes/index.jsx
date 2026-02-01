@@ -24,7 +24,7 @@ import NotFoundPage from "@/pages/NotFound";
 
 
 const router = createBrowserRouter([{
-    path:'/',
+    path:"/",
     element:<App/>,
     children:[{
         path:"/",

@@ -1,24 +1,35 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from "react-router";
-import { useSelector } from "react-redux";
+import { CREATE_CRIME_REPORT, UPDATE_CRIME_REPORT } from "@/routes/serverEndpoint";
+import axiosService from "@/utils/axiosService";
+import { ArrowLeft, File, FileText, Image, Trash2, Upload, Video, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router";
+import { toast } from 'react-toastify';
 import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
-import { toast } from 'react-toastify';
-import axiosService from "@/utils/axiosService";
-import { CREATE_CRIME_REPORT } from "@/routes/serverEndpoint";
-import { X, Upload, File, Image, Video, FileText } from 'lucide-react';
+import { fetchAllCrimeReports } from "@/store/slices/getAllReports";
 
 const ReportCrime = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+  const editReportId = searchParams.get('edit');
+  
   const userData = useSelector(state => state?.user?.user);
+  const crimeReportsState = useSelector(state => state?.allReports);
+  const { reports: allReports = [] } = crimeReportsState || {};
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
   
   const [formData, setFormData] = useState({
     crimeType: "",
@@ -31,6 +42,8 @@ const ReportCrime = () => {
   });
 
   const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [existingEvidencePaths, setExistingEvidencePaths] = useState([]);
+  const [removedEvidencePaths, setRemovedEvidencePaths] = useState([]);
 
   const crimeTypes = [
     { label: "Theft/Burglary", value: "theft/burglary" },
@@ -46,11 +59,111 @@ const ReportCrime = () => {
     { label: "Other", value: "other" }
   ];
 
+  const getFullEvidenceUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${import.meta.env.VITE_SERVER_URL}/${path}`;
+  };
+
+  const initializeEditMode = useCallback(() => {
+    if (editReportId && allReports.length > 0) {
+      const reportToEdit = allReports.find(report => report._id === editReportId);
+      
+      if (reportToEdit) {
+        setIsEditMode(true);
+        
+        setFormData({
+          crimeType: reportToEdit.crimeType || "",
+          description: reportToEdit.description || "",
+          incidentDate: reportToEdit.incidentDate ? 
+            new Date(reportToEdit.incidentDate).toISOString().split('T')[0] : "",
+          incidentTime: reportToEdit.incidentTime || "",
+          locationAddress: reportToEdit.locationAddress || "",
+          latitude: reportToEdit.coordinates?.latitude?.toString() || reportToEdit.latitude?.toString() || "",
+          longitude: reportToEdit.coordinates?.longitude?.toString() || reportToEdit.longitude?.toString() || ""
+        });
+
+        if (reportToEdit.evidences && reportToEdit.evidences.length > 0) {
+          setExistingEvidencePaths(reportToEdit.evidences);
+        } else if (reportToEdit.evidenceUrls && reportToEdit.evidenceUrls.length > 0) {
+          setExistingEvidencePaths(reportToEdit.evidenceUrls);
+        }
+      } else {
+        toast.error("Report not found. Creating new report instead.");
+      }
+      setIsInitialized(true);
+    }
+  }, [editReportId, allReports]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      initializeEditMode();
+    }
+  }, [initializeEditMode, isInitialized]);
+
+  const initializeNewReport = useCallback(() => {
+    if (!editReportId && !isEditMode) {
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+      
+      setFormData(prev => ({
+        ...prev,
+        incidentDate: today,
+        incidentTime: now
+      }));
+
+      const locationPermission = localStorage.getItem('locationPermission');
+      const savedLat = localStorage.getItem('userLatitude');
+      const savedLng = localStorage.getItem('userLongitude');
+
+      if (locationPermission === 'granted' && savedLat && savedLng) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: savedLat,
+          longitude: savedLng
+        }));
+        setLocationLoading(false);
+      } else if (locationPermission === 'denied') {
+        toast.info("Using default Ithari location.");
+        setDefaultIthariLocation();
+        setLocationLoading(false);
+      } else {
+        const askForLocation = () => {
+          if (window.confirm("Allow SmartReport to access your location?")) {
+            getUserLocation();
+          } else {
+            localStorage.setItem('locationPermission', 'denied');
+            toast.info("Using default Ithari location.");
+            setDefaultIthariLocation();
+            setLocationLoading(false);
+          }
+        };
+
+        setTimeout(() => {
+          askForLocation();
+        }, 500);
+      }
+    }
+  }, [editReportId, isEditMode]);
+
+  useEffect(() => {
+    initializeNewReport();
+  }, [initializeNewReport]);
+
+  useEffect(() => {
+    if (formData.latitude && formData.longitude && !mapRef.current && !mapInitialized) {
+      const lat = parseFloat(formData.latitude);
+      const lng = parseFloat(formData.longitude);
+      initializeMap(lat, lng);
+      setMapInitialized(true);
+    }
+  }, [formData.latitude, formData.longitude, mapInitialized]);
+
   const getUserLocation = () => {
     setLocationLoading(true);
     
     if (!navigator.geolocation) {
-      toast.warn("Geolocation is not supported by your browser");
+      toast.warn("Geolocation is not supported");
       setDefaultIthariLocation();
       return;
     }
@@ -68,27 +181,12 @@ const ReportCrime = () => {
         localStorage.setItem('userLatitude', latitude.toString());
         localStorage.setItem('userLongitude', longitude.toString());
         
-        toast.success("Your location detected successfully!");
+        toast.success("Location detected!");
         updateMapMarker(latitude, longitude);
         setLocationLoading(false);
       },
       (error) => {
         localStorage.setItem('locationPermission', 'denied');
-        
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            toast.warn("Location permission denied. Using default Ithari location.");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.warn("Location information unavailable. Using default Ithari location.");
-            break;
-          case error.TIMEOUT:
-            toast.warn("Location request timed out. Using default Ithari location.");
-            break;
-          default:
-            toast.warn("Unable to get your location. Using default Ithari location.");
-        }
-        
         setDefaultIthariLocation();
         setLocationLoading(false);
       },
@@ -130,96 +228,61 @@ const ReportCrime = () => {
   };
 
   const initializeMap = async (lat, lng) => {
-    const L = await import('leaflet');
-    await import('leaflet/dist/leaflet.css');
+    try {
+      const L = await import('leaflet');
+      await import('leaflet/dist/leaflet.css');
 
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      });
 
-    const mapInstance = L.map('map').setView([lat, lng], 13);
+      const mapInstance = L.map('map').setView([lat, lng], 13);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(mapInstance);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapInstance);
 
-    const initialMarker = L.marker([lat, lng])
-      .addTo(mapInstance)
-      .bindPopup('Crime Location')
-      .openPopup();
-
-    markerRef.current = initialMarker;
-
-    mapInstance.on('click', (e) => {
-      const { lat: clickedLat, lng: clickedLng } = e.latlng;
-      
-      setFormData(prev => ({
-        ...prev,
-        latitude: clickedLat.toString(),
-        longitude: clickedLng.toString()
-      }));
-
-      if (markerRef.current) {
-        mapInstance.removeLayer(markerRef.current);
-      }
-
-      const newMarker = L.marker([clickedLat, clickedLng])
+      const initialMarker = L.marker([lat, lng])
         .addTo(mapInstance)
         .bindPopup('Crime Location')
         .openPopup();
 
-      markerRef.current = newMarker;
-      mapInstance.setView([clickedLat, clickedLng], 13);
-    });
+      markerRef.current = initialMarker;
 
-    mapRef.current = mapInstance;
+      mapInstance.on('click', (e) => {
+        const { lat: clickedLat, lng: clickedLng } = e.latlng;
+        
+        setFormData(prev => ({
+          ...prev,
+          latitude: clickedLat.toString(),
+          longitude: clickedLng.toString()
+        }));
+
+        if (markerRef.current) {
+          mapInstance.removeLayer(markerRef.current);
+        }
+
+        const newMarker = L.marker([clickedLat, clickedLng])
+          .addTo(mapInstance)
+          .bindPopup('Crime Location')
+          .openPopup();
+
+        markerRef.current = newMarker;
+        mapInstance.setView([clickedLat, clickedLng], 13);
+      });
+
+      mapRef.current = mapInstance;
+      setLocationLoading(false);
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      setLocationLoading(false);
+    }
   };
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
-    
-    setFormData(prev => ({
-      ...prev,
-      incidentDate: today,
-      incidentTime: now
-    }));
-
-    const locationPermission = localStorage.getItem('locationPermission');
-    const savedLat = localStorage.getItem('userLatitude');
-    const savedLng = localStorage.getItem('userLongitude');
-
-    if (locationPermission === 'granted' && savedLat && savedLng) {
-      setFormData(prev => ({
-        ...prev,
-        latitude: savedLat,
-        longitude: savedLng
-      }));
-      setLocationLoading(false);
-    } else if (locationPermission === 'denied') {
-      toast.info("Using default Ithari location. You can click on map to select location.");
-      setDefaultIthariLocation();
-      setLocationLoading(false);
-    } else {
-      const askForLocation = () => {
-        if (window.confirm("Allow SmartReport to access your location for accurate crime reporting?")) {
-          getUserLocation();
-        } else {
-          localStorage.setItem('locationPermission', 'denied');
-          toast.info("Using default Ithari location. You can click on map to select location.");
-          setDefaultIthariLocation();
-          setLocationLoading(false);
-        }
-      };
-
-      setTimeout(() => {
-        askForLocation();
-      }, 500);
-    }
-
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -229,14 +292,6 @@ const ReportCrime = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (formData.latitude && formData.longitude && !mapRef.current) {
-      const lat = parseFloat(formData.latitude);
-      const lng = parseFloat(formData.longitude);
-      initializeMap(lat, lng);
-    }
-  }, [formData.latitude, formData.longitude]);
-
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -244,8 +299,11 @@ const ReportCrime = () => {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     
-    if (evidenceFiles.length + files.length > 5) {
-      toast.error("Maximum 5 files allowed");
+    const keptExistingFiles = existingEvidencePaths.length - removedEvidencePaths.length;
+    const totalCurrentFiles = keptExistingFiles + evidenceFiles.length;
+    
+    if (totalCurrentFiles + files.length > 5) {
+      toast.error(`Maximum 5 files allowed.`);
       return;
     }
 
@@ -261,7 +319,7 @@ const ReportCrime = () => {
     });
 
     if (invalidFiles.length > 0) {
-      toast.error(`${invalidFiles.length} file(s) exceed 10MB limit: ${invalidFiles.join(', ')}`);
+      toast.error(`${invalidFiles.length} file(s) exceed 10MB limit.`);
     }
 
     if (validFiles.length > 0) {
@@ -273,7 +331,28 @@ const ReportCrime = () => {
     setEvidenceFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingEvidence = (index) => {
+    const pathToRemove = existingEvidencePaths[index];
+    setRemovedEvidencePaths(prev => [...prev, pathToRemove]);
+    setExistingEvidencePaths(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const restoreExistingEvidence = (index) => {
+    const pathToRestore = removedEvidencePaths[index];
+    setRemovedEvidencePaths(prev => prev.filter((_, i) => i !== index));
+    setExistingEvidencePaths(prev => [...prev, pathToRestore]);
+  };
+
   const getFileIcon = (file) => {
+    if (typeof file === 'string') {
+      const ext = file.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return <Image className="h-4 w-4" />;
+      if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return <Video className="h-4 w-4" />;
+      if (ext === 'pdf') return <FileText className="h-4 w-4" />;
+      if (['mp3', 'wav', 'ogg'].includes(ext)) return <File className="h-4 w-4" />;
+      return <File className="h-4 w-4" />;
+    }
+    
     if (file.type.startsWith('image/')) return <Image className="h-4 w-4" />;
     if (file.type.startsWith('video/')) return <Video className="h-4 w-4" />;
     if (file.type === 'application/pdf') return <FileText className="h-4 w-4" />;
@@ -292,37 +371,46 @@ const ReportCrime = () => {
     setIsLoading(true);
     
     if (!userData?._id) {
-      toast.error("You must be logged in to submit a report");
+      toast.error("You must be logged in.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.latitude || !formData.longitude) {
-      toast.error("Please select a location on the map");
+      toast.error("Please select a location.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.crimeType) {
-      toast.error("Please select a crime type");
+      toast.error("Please select a crime type.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.description) {
-      toast.error("Please provide a description");
+      toast.error("Please provide a description.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.incidentDate || !formData.incidentTime) {
-      toast.error("Please provide date and time of incident");
+      toast.error("Please provide date and time.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.locationAddress) {
-      toast.error("Please provide location address");
+      toast.error("Please provide location address.");
+      setIsLoading(false);
+      return;
+    }
+
+    const keptExistingFiles = existingEvidencePaths.length - removedEvidencePaths.length;
+    const totalFiles = keptExistingFiles + evidenceFiles.length;
+    
+    if (totalFiles > 5) {
+      toast.error("Maximum 5 files allowed.");
       setIsLoading(false);
       return;
     }
@@ -337,40 +425,79 @@ const ReportCrime = () => {
     formDataToSend.append('latitude', formData.latitude);
     formDataToSend.append('longitude', formData.longitude);
     
-    evidenceFiles.forEach((file, index) => {
+    evidenceFiles.forEach((file) => {
       formDataToSend.append('evidences', file);
     });
 
     try {
-      const response = await axiosService.post(CREATE_CRIME_REPORT, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        withCredentials: true
-      });
+      let response;
       
-      toast.success(response?.data?.message || "Report submitted successfully!");
+      if (isEditMode && editReportId) {
+        removedEvidencePaths.forEach(path => {
+          formDataToSend.append('removedEvidences', path);
+        });
+        
+        existingEvidencePaths.forEach(path => {
+          if (!removedEvidencePaths.includes(path)) {
+            formDataToSend.append('existingEvidences', path);
+          }
+        });
+        
+        response = await axiosService.patch(
+          `${UPDATE_CRIME_REPORT}/${editReportId}`,
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            },
+            withCredentials: true
+          }
+        );
+        
+        if(response?.status===200){
+          await dispatch(fetchAllCrimeReports());
+          toast.success("Report updated!");
+        }
+        
+      } else {
+        response = await axiosService.post(CREATE_CRIME_REPORT, formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          withCredentials: true
+        });
+        
+        if(response?.status===201){
+          await dispatch(fetchAllCrimeReports());
+          toast.success("Report submitted!");
+        }
+      }
       
       setEvidenceFiles([]);
-      const today = new Date().toISOString().split('T')[0];
-      const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+      setExistingEvidencePaths([]);
+      setRemovedEvidencePaths([]);
       
-      setFormData({
-        crimeType: "",
-        description: "",
-        incidentDate: today,
-        incidentTime: now,
-        locationAddress: "",
-        latitude: "",
-        longitude: ""
-      });
+      if (!isEditMode) {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+        
+        setFormData({
+          crimeType: "",
+          description: "",
+          incidentDate: today,
+          incidentTime: now,
+          locationAddress: "",
+          latitude: "",
+          longitude: ""
+        });
+      }
       
       navigate("/myreport");
     } catch (error) {
       console.log("Report submission error:", error);
       toast.error(
         error?.response?.data?.message || 
-        "Failed to submit report. Please try again."
+        "Failed. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -378,7 +505,7 @@ const ReportCrime = () => {
   };
 
   const handleEmergency = () => {
-    toast.info("For Emergency, please call 100 (Police) immediately!");
+    toast.info("For Emergency, please call 100!");
   };
 
   const handleUseMyLocation = () => {
@@ -400,32 +527,56 @@ const ReportCrime = () => {
         getUserLocation();
       }
     } else if (locationPermission === 'denied') {
-      if (window.confirm("Location permission was previously denied. Would you like to allow location access now?")) {
+      if (window.confirm("Allow location access?")) {
         localStorage.removeItem('locationPermission');
         getUserLocation();
       } else {
-        toast.info("You can click on map to select location manually.");
+        toast.info("Click on map to select location.");
       }
     } else {
       getUserLocation();
     }
   };
 
+  const handleCancelEdit = () => {
+    navigate("/myreport");
+  };
+
+  const keptExistingFiles = existingEvidencePaths.length - removedEvidencePaths.length;
+  const totalCurrentFiles = keptExistingFiles + evidenceFiles.length;
+  const canAddMoreFiles = totalCurrentFiles < 5;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <Card className="max-w-6xl mx-auto">
-          <CardHeader className="space-y-1 flex flex-col items-center">
-            <img 
-              src="/images/logo.png" 
-              alt="SmartReport Logo" 
-              className="h-16 w-16 object-contain mb-4"
-            />
-            <CardTitle className="text-2xl font-bold text-center">
-              Create Report
+          <CardHeader className="space-y-1">
+            <div className="flex items-center gap-4 mb-4">
+              {isEditMode && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleCancelEdit}
+                  className="cursor-pointer"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Reports
+                </Button>
+              )}
+              <img 
+                src="/images/logo.png" 
+                alt="SmartReport Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
+            <CardTitle className="text-2xl font-bold">
+              {isEditMode ? "Update Report" : "Create Report"}
             </CardTitle>
-            <CardDescription className="text-center">
-              Fill in the details to file a crime report
+            <CardDescription>
+              {isEditMode 
+                ? "Update the details of your crime report" 
+                : "Fill in the details to file a crime report"
+              }
             </CardDescription>
           </CardHeader>
           
@@ -436,9 +587,15 @@ const ReportCrime = () => {
                 <Select
                   value={formData.crimeType}
                   onValueChange={(value) => handleChange("crimeType", value)}
+                  key={formData.crimeType || "default"}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select crime type" />
+                    <SelectValue placeholder="Select crime type">
+                      {formData.crimeType ? 
+                        crimeTypes.find(type => type.value === formData.crimeType)?.label : 
+                        "Select crime type"
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {crimeTypes.map((type) => (
@@ -454,7 +611,7 @@ const ReportCrime = () => {
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Provide detailed description of the incident..."
+                  placeholder="Provide detailed description..."
                   value={formData.description}
                   onChange={(e) => handleChange("description", e.target.value)}
                   required
@@ -562,9 +719,105 @@ const ReportCrime = () => {
               </div>
 
               <div className="space-y-4">
-                <Label>Upload Evidence (Optional - Max 5 files, 10MB each)</Label>
+                <div className="flex justify-between items-center">
+                  <Label>Upload Evidence (Optional - Max 5 files, 10MB each)</Label>
+                  <span className="text-sm text-gray-500">
+                    {totalCurrentFiles}/5 files
+                  </span>
+                </div>
                 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                {isEditMode && existingEvidencePaths.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Existing Evidence:
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {existingEvidencePaths.map((path, index) => {
+                        const isRemoved = removedEvidencePaths.includes(path);
+                        const fileName = path.split('/').pop();
+                        const isImage = fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                        const fullUrl = getFullEvidenceUrl(path);
+                        
+                        return (
+                          <div
+                            key={index}
+                            className={`relative border rounded-lg overflow-hidden ${
+                              isRemoved ? 'border-red-300 opacity-60' : 'border-gray-200'
+                            }`}
+                          >
+                            <div className="relative h-40 bg-gray-100">
+                              {isImage ? (
+                                <img
+                                  src={fullUrl}
+                                  alt={`Evidence ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '';
+                                    e.target.parentElement.innerHTML = `
+                                      <div class="w-full h-full flex flex-col items-center justify-center">
+                                        <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span class="mt-2 text-sm text-gray-500">${fileName}</span>
+                                      </div>
+                                    `;
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                  {getFileIcon(fileName)}
+                                  <span className="mt-2 text-sm text-gray-500 truncate px-2">
+                                    {fileName}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="absolute top-2 right-2">
+                                <Button
+                                  type="button"
+                                  variant={isRemoved ? "outline" : "destructive"}
+                                  size="sm"
+                                  onClick={() => isRemoved ? restoreExistingEvidence(index) : removeExistingEvidence(index)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  {isRemoved ? (
+                                    <span className="text-xs">↺</span>
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-sm font-medium truncate">
+                                {fileName}
+                              </p>
+                              {!isRemoved && (
+                                <a 
+                                  href={fullUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline"
+                                >
+                                  View Full
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {removedEvidencePaths.length > 0 && (
+                      <p className="text-xs text-green-600 mt-2">
+                        {removedEvidencePaths.length} file(s) marked for removal
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                <div className={`border-2 border-dashed rounded-lg p-8 text-center ${
+                  canAddMoreFiles ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
+                }`}>
                   <input
                     type="file"
                     id="evidenceFiles"
@@ -572,21 +825,30 @@ const ReportCrime = () => {
                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
                     className="hidden"
                     multiple
+                    disabled={!canAddMoreFiles}
                   />
                   <label
                     htmlFor="evidenceFiles"
-                    className="cursor-pointer flex flex-col items-center"
+                    className={`cursor-pointer flex flex-col items-center ${!canAddMoreFiles && 'cursor-not-allowed'}`}
                   >
-                    <Upload className="h-12 w-12 text-gray-400 mb-4" />
+                    <Upload className={`h-12 w-12 mb-4 ${canAddMoreFiles ? 'text-gray-400' : 'text-gray-300'}`} />
                     <p className="text-lg font-medium mb-2">
-                      Click to upload or drag and drop
+                      {canAddMoreFiles ? "Click to upload or drag and drop" : "Maximum files reached"}
                     </p>
                     <p className="text-sm text-gray-500 mb-2">
                       Images, Videos, Audio, Documents (Max 10MB each)
                     </p>
                     <p className="text-sm text-gray-400">
-                      {evidenceFiles.length}/5 files selected
+                      {evidenceFiles.length} new file(s) uploaded
+                      {isEditMode && existingEvidencePaths.length > 0 && 
+                        `, ${keptExistingFiles} existing file(s) kept`
+                      }
                     </p>
+                    {totalCurrentFiles >= 5 && (
+                      <p className="text-sm text-red-500 mt-2">
+                        Maximum 5 files reached.
+                      </p>
+                    )}
                   </label>
                 </div>
 
@@ -594,7 +856,7 @@ const ReportCrime = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">
-                        Selected Files
+                        New Files to Upload
                       </span>
                       <span className="text-sm text-gray-500">
                         {evidenceFiles.length} file(s)
@@ -640,7 +902,7 @@ const ReportCrime = () => {
                   <div>
                     <h4 className="font-bold text-red-800">Emergency?</h4>
                     <p className="text-red-700">
-                      For immediate emergency, please call <strong className="font-bold">100</strong> (Police) or use the SOS button.
+                      For immediate emergency, please call <strong className="font-bold">100</strong>.
                     </p>
                     <Button
                       type="button"
@@ -658,7 +920,7 @@ const ReportCrime = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate(-1)}
+                  onClick={isEditMode ? handleCancelEdit : () => navigate(-1)}
                   className="cursor-pointer"
                   disabled={isLoading}
                 >
@@ -669,7 +931,10 @@ const ReportCrime = () => {
                   className="cursor-pointer"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Submitting..." : "Submit Report"}
+                  {isLoading 
+                    ? (isEditMode ? "Updating..." : "Submitting...") 
+                    : (isEditMode ? "Update Report" : "Submit Report")
+                  }
                 </Button>
               </div>
             </form>

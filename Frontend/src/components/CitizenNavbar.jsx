@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -100,7 +100,7 @@ const CitizenNavbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <a href="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3">
               <div className="flex items-center justify-center h-14 w-14 rounded-lg ">
                 <img 
                   src="/images/logo.png" 
@@ -109,14 +109,14 @@ const CitizenNavbar = () => {
                 />
               </div>
               <span className="text-xl font-bold text-gray-900">SmartReport</span>
-            </a>
+            </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.id}
-                href={item.path}
+                to={item.path}
                 className={`px-3 py-2 text-sm font-medium transition duration-150 relative group flex items-center ${
                   isActivePath(item.path)
                     ? 'text-blue-600'
@@ -128,7 +128,7 @@ const CitizenNavbar = () => {
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transition-all duration-300 ${
                   isActivePath(item.path) ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
-              </a>
+              </Link>
             ))}
           </div>
 

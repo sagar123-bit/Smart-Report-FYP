@@ -1,42 +1,48 @@
-import React, { useState, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  FileText, 
-  CheckCircle,
-  LogOut,
-  Edit,
-  AlertCircle,
-  Upload,
-  Trash2,
-  Camera
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'react-toastify';
-import { fetchAuthUser, logoutUser } from '@/store/slices/userSlice';
-import { useNavigate } from 'react-router';
-import axiosService from '@/utils/axiosService';
-import { USER_IMAGE } from '@/routes/serverEndpoint';
 import EditProfileDialog from '@/components/EditProfile';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { USER_IMAGE } from '@/routes/serverEndpoint';
+import { fetchAuthUser, logoutUser } from '@/store/slices/userSlice';
+import axiosService from '@/utils/axiosService';
+import {
+  AlertCircle,
+  Camera,
+  CheckCircle,
+  Clock,
+  Edit,
+  FileText,
+  LogOut,
+  Mail,
+  MapPin,
+  Phone,
+  Trash2,
+  Upload,
+  User
+} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
+import { toast } from 'react-toastify';
 
 const Profile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userData = useSelector(state => state?.user?.user);
+  const crimeReports = useSelector(state=>state?.allReports?.reports);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  const userReports = crimeReports?.filter(report => 
+    report.reportedBy._id === userData?._id
+  ) || [];
 
-  const dummyStats = {
-    totalCases: 24,
-    pendingCases: 5,
-    resolvedCases: 19,
+  const userStats = {
+    totalCases: userReports.length,
+    pendingCases: userReports.filter(report => report.status === 'pending').length,
+    inProgressCases: userReports.filter(report => report.status === 'in progress').length,
+    resolvedCases: userReports.filter(report => report.status === 'resolved').length,
   };
 
   const hasPhoneNumber = userData?.phoneNumber && userData.phoneNumber.trim() !== '';
@@ -287,13 +293,13 @@ const Profile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-4 gap-6">
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-gray-200 rounded-lg">
                         <FileText className="h-6 w-6 text-gray-700" />
                       </div>
-                      <span className="text-3xl font-bold text-gray-900">{dummyStats.totalCases}</span>
+                      <span className="text-3xl font-bold text-gray-900">{userStats.totalCases}</span>
                     </div>
                     <h4 className="text-gray-600 font-medium">Total Cases</h4>
                     <p className="text-gray-500 text-sm mt-1">All cases registered</p>
@@ -302,12 +308,23 @@ const Profile = () => {
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-amber-200 rounded-lg">
-                        <FileText className="h-6 w-6 text-amber-700" />
+                        <Clock className="h-6 w-6 text-amber-700" />
                       </div>
-                      <span className="text-3xl font-bold text-amber-900">{dummyStats.pendingCases}</span>
+                      <span className="text-3xl font-bold text-amber-900">{userStats.pendingCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">Pending Cases</h4>
+                    <h4 className="text-gray-600 font-medium">Pending</h4>
                     <p className="text-gray-500 text-sm mt-1">Awaiting resolution</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-blue-200 rounded-lg">
+                        <Clock className="h-6 w-6 text-blue-700" />
+                      </div>
+                      <span className="text-3xl font-bold text-blue-900">{userStats.inProgressCases}</span>
+                    </div>
+                    <h4 className="text-gray-600 font-medium">In Progress</h4>
+                    <p className="text-gray-500 text-sm mt-1">Under investigation</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
@@ -315,7 +332,7 @@ const Profile = () => {
                       <div className="p-3 bg-emerald-200 rounded-lg">
                         <CheckCircle className="h-6 w-6 text-emerald-700" />
                       </div>
-                      <span className="text-3xl font-bold text-emerald-900">{dummyStats.resolvedCases}</span>
+                      <span className="text-3xl font-bold text-emerald-900">{userStats.resolvedCases}</span>
                     </div>
                     <h4 className="text-gray-600 font-medium">Resolved</h4>
                     <p className="text-gray-500 text-sm mt-1">Successfully closed</p>
@@ -326,18 +343,24 @@ const Profile = () => {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Case Resolution Progress</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {Math.round((dummyStats.resolvedCases / dummyStats.totalCases) * 100)}%
+                      {userStats.totalCases > 0 
+                        ? Math.round((userStats.resolvedCases / userStats.totalCases) * 100)
+                        : 0}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 cursor-pointer">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${(dummyStats.resolvedCases / dummyStats.totalCases) * 100}%` }}
+                      style={{ 
+                        width: userStats.totalCases > 0 
+                          ? `${(userStats.resolvedCases / userStats.totalCases) * 100}%` 
+                          : '0%' 
+                      }}
                     ></div>
                   </div>
                   <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>{dummyStats.pendingCases} pending</span>
-                    <span>{dummyStats.resolvedCases} resolved</span>
+                    <span>{userStats.pendingCases + userStats.inProgressCases} ongoing</span>
+                    <span>{userStats.resolvedCases} resolved</span>
                   </div>
                 </div>
               </CardContent>
@@ -345,21 +368,21 @@ const Profile = () => {
 
             <div className="grid md:grid-cols-2 gap-6">
               <Button 
-        onClick={() => setIsEditDialogOpen(true)}
-        className="h-12 gap-3 cursor-pointer"
-        variant="outline"
-      >
-        <Edit className="h-4 w-4" />
-        Edit Profile Information
-      </Button>
-{
-  isEditDialogOpen &&
-      <EditProfileDialog 
-        open={isEditDialogOpen} 
-        onOpenChange={setIsEditDialogOpen} 
-      />
-}
-              <Button className="h-12 gap-3 cursor-pointer">
+                onClick={() => setIsEditDialogOpen(true)}
+                className="h-12 gap-3 cursor-pointer"
+                variant="outline"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Profile Information
+              </Button>
+              {
+                isEditDialogOpen &&
+                <EditProfileDialog 
+                  open={isEditDialogOpen} 
+                  onOpenChange={setIsEditDialogOpen} 
+                />
+              }
+              <Button onClick={()=>navigate("/myreport")} className="h-12 gap-3 cursor-pointer">
                 <FileText className="h-4 w-4" />
                 View All Cases
               </Button>

@@ -19,3 +19,7 @@ export const USER_IMAGE=`${BASE_URL}/user/user-image`;
 export const UPDATE_USER_PROFILE=`${BASE_URL}/user/update-profile`;
 
 export const CREATE_CRIME_REPORT=`${BASE_URL}/user/crime-report`;
+
+export const GET_ALL_USERS =`${BASE_URL}/user/get-all-users`;
+export const GET_ALL_CRIME_REPORTS = `${BASE_URL}/user/get-all-reports`
+export const UPDATE_CRIME_REPORT=`${BASE_URL}/user/update-user-report`;

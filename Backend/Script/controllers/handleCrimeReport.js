@@ -56,59 +56,91 @@ class CrimeReportController {
 
 
   static updateReport = async (req, res) => {
-    try {
-      const authUser = req.user;
-      const { reportId } = req.params;
+  try {
+    const authUser = req.user;
+    const { reportId } = req.params;
 
-      if (!authUser) return res.status(401).json({ message: "Unauthorized" });
-
-      const report = await CrimeReport.findOne({ reportId });
-      if (!report) return res.status(404).json({ message: "Report not found" });
-
-      if (report.status !== "pending") {
-        return res.status(403).json({ message: "Only pending reports can be updated" });
-      }
-
-      if (report.reportedBy.toString() !== authUser._id.toString() && authUser.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
-      const { crimeType, description, incidentDate, incidentTime, locationAddress, latitude, longitude } = req.body;
-
-      if (crimeType) report.crimeType = crimeType;
-      if (description) report.description = description;
-      if (incidentDate) report.incidentDate = new Date(incidentDate);
-      if (incidentTime) report.incidentTime = incidentTime;
-      if (locationAddress) report.locationAddress = locationAddress;
-      if (latitude && longitude) {
-        report.coordinates = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
-      }
-
-
-      if (req.files && req.files.length > 0) {
-        // Delete old evidence files
-        if (report.evidenceUrls && report.evidenceUrls.length > 0) {
-          report.evidenceUrls.forEach(evidencePath => {
-            const fullPath = path.resolve(`./Script/uploads/${evidencePath}`);
-            if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-          });
-        }
-
-        const newEvidence = req.files.map(file => `${authUser.userId}/crime-evidence/${file.filename}`);
-        report.evidenceUrls = newEvidence;
-      }
-
-      await report.save();
-
-      return res.status(200).json({
-        message: "Crime report updated successfully",
-        report,
-      });
-    } catch (error) {
-      console.error("Update Report Error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+    if (!authUser) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-  };
+
+    const report = await CrimeReport.findById(reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    if (report.reportedBy.toString() !== authUser._id.toString()) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (report.status !== "pending") {
+      return res
+        .status(403)
+        .json({ message: "Only pending reports can be updated" });
+    }
+
+    const {
+      crimeType,
+      description,
+      incidentDate,
+      incidentTime,
+      locationAddress,
+      latitude,
+      longitude,
+      existingEvidences = [],
+      removedEvidences = [],
+    } = req.body;
+
+    if (crimeType) report.crimeType = crimeType;
+    if (description) report.description = description;
+    if (incidentDate) report.incidentDate = new Date(incidentDate);
+    if (incidentTime) report.incidentTime = incidentTime;
+    if (locationAddress) report.locationAddress = locationAddress;
+
+    if (latitude && longitude) {
+      report.coordinates = {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+      };
+    }
+
+    const removed = Array.isArray(removedEvidences)
+      ? removedEvidences
+      : removedEvidences
+      ? [removedEvidences]
+      : [];
+
+    removed.forEach((evidencePath) => {
+      const fullPath = path.resolve(`./Script/uploads/${evidencePath}`);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    });
+
+    const keptEvidence = Array.isArray(existingEvidences)
+      ? existingEvidences
+      : existingEvidences
+      ? [existingEvidences]
+      : [];
+
+    const newEvidence =
+      req.files?.map(
+        (file) => `${authUser.userId}/crime-evidence/${file.filename}`
+      ) || [];
+
+    report.evidenceUrls = [...keptEvidence, ...newEvidence];
+
+    await report.save();
+
+    return res.status(200).json({
+      message: "Crime report updated successfully",
+      report,
+    });
+  } catch (error) {
+    console.error("Update Report Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
   static deleteReport = async (req, res) => {

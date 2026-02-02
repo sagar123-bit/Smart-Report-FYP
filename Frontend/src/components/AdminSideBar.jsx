@@ -52,7 +52,6 @@ const AdminSidebar = () => {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    dispatch(fetchAuthUser());
     navigate('/login');
   };
 

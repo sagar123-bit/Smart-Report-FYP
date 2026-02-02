@@ -85,7 +85,7 @@ const PoliceSidebar = () => {
             </div>
             <div>
               <h1 className="font-bold text-lg text-gray-900">Police Portal</h1>
-              <p className="text-sm text-gray-600">Case Management</p>
+              <p className="text-sm text-gray-600">Smart Report</p>
             </div>
           </div>
         </div>

@@ -80,7 +80,6 @@ const CitizenNavbar = () => {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    dispatch(fetchAuthUser());
     navigate('/login');
   };
 

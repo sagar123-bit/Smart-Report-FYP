@@ -7,23 +7,33 @@ export const fetchAuthUser = createAsyncThunk(
   "auth/fetchAuthUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosService.get(GET_AUTH_USER,{withCredentials:true});
+      const response = await axiosService.get(GET_AUTH_USER, {
+        withCredentials: true,
+      });
       return response.data.user;
     } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || "Failed to fetch user");
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch user"
+      );
     }
   }
 );
 
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
-      const response=await axiosService.delete(LOGOUT,{withCredentials:true});
-      toast.success(response?.data?.message||"Logged out successfully");
+      const response = await axiosService.delete(LOGOUT, {
+        withCredentials: true,
+      });
+      await dispatch(fetchAuthUser());
+      toast.success(response?.data?.message || "Logged out successfully");
+
       return true;
     } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || "Logout failed");
+      return rejectWithValue(
+        error?.response?.data?.message || "Logout failed"
+      );
     }
   }
 );
@@ -35,6 +45,7 @@ const userSlice = createSlice({
     loading: false,
     error: null,
   },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchAuthUser.pending, (state) => {
@@ -47,8 +58,8 @@ const userSlice = createSlice({
       })
       .addCase(fetchAuthUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
         state.user = null;
+        state.error = action.payload;
       })
 
       .addCase(logoutUser.pending, (state) => {

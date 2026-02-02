@@ -1,17 +1,16 @@
-import React from 'react';
+import { AlertCircle, Clock, FileText, Shield, ShieldCheck, User, UserCheck, Users } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router';
 import {
+  VictoryAxis,
   VictoryBar,
   VictoryChart,
-  VictoryAxis,
-  VictoryTooltip,
-  VictoryLegend,
-  VictoryPie,
   VictoryLabel,
-  VictoryLine
+  VictoryLegend,
+  VictoryLine,
+  VictoryPie,
+  VictoryTooltip
 } from 'victory';
-import { FileText, Clock, User, Shield, Users, UserCheck, ShieldCheck, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router';
-import { useSelector } from 'react-redux';
 
 const ADashboard = () => {
   const { users, loading: userLoading } = useSelector(state => state?.allUsers);
@@ -20,13 +19,16 @@ const ADashboard = () => {
   const currentYear = new Date().getFullYear();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const filteredUsers = users?.filter(user => 
+  const userData = users ? [...users] : [];
+  const reportData = reports ? [...reports] : [];
+
+  const filteredUsers = userData.filter(user => 
     user.status === "active" && 
     (user.userType === "citizen" || 
      (user.userType === "police" && user.policeData?.status === "verified"))
-  ) || [];
+  );
 
-  const allReports = reports || [];
+  const allReports = reportData;
 
   const citizens = filteredUsers.filter(user => user.userType === "citizen");
   const police = filteredUsers.filter(user => user.userType === "police");
@@ -37,10 +39,11 @@ const ADashboard = () => {
   const resolvedReports = allReports.filter(report => report.status === "resolved");
   const totalReports = allReports.length;
 
-  const provinceNames = ["province-1", "province-2", "province-3", "province-4", "province-5", "province-6", "province-7"];
-  const provinceReports = provinceNames.map(province => ({
-    x: province.replace('province-', 'Province '),
-    y: allReports.filter(report => report.reportedBy?.province === province).length
+  const provinces = ["Koshi", "Madesh", "Bagmati", "Gandaki", "Lumbini", "Karnali", "Sudurpashchim"];
+  
+  const provinceReports = provinces.map(province => ({
+    x: province,
+    y: allReports.filter(report => report.province === province).length
   }));
 
   const caseStatusData = [
@@ -80,7 +83,7 @@ const ADashboard = () => {
 
   const { citizenData, policeData } = getMonthlyRegistrations();
 
-  const recentCases = allReports
+  const recentCases = [...allReports]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5)
     .map(report => ({

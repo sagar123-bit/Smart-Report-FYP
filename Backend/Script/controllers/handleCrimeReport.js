@@ -18,10 +18,11 @@ class CrimeReportController {
         incidentTime,
         locationAddress,
         latitude,
-        longitude
+        longitude,
+        province
       } = req.body;
 
-      if (!crimeType || !description || !incidentDate || !incidentTime || !locationAddress || !latitude || !longitude) {
+      if (!crimeType || !description || !province || !incidentDate || !incidentTime || !locationAddress || !latitude || !longitude) {
         return res.status(400).json({ message: "All required fields must be provided" });
       }
 
@@ -31,6 +32,7 @@ class CrimeReportController {
         reportId: nanoid(10),
         reportedBy: authUser._id,
         crimeType,
+        province,
         description,
         incidentDate: new Date(incidentDate),
         incidentTime,

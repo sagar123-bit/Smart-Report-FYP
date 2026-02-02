@@ -26,5 +26,6 @@ userRouter.patch("/update-user-report/:reportId",uploadCrimeEvidence.array("evid
 userRouter.delete("/delete-report/:reportId",CrimeReportController.deleteReport);
 userRouter.patch("/update-user-status/:userId",updateUserStatus);
 userRouter.patch("/verify-police/:userId",verifyPolice);
+userRouter.patch("/update-report-status/:reportId",CrimeReportController.updateReportStatus);
 
 export default userRouter;

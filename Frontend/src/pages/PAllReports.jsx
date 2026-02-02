@@ -1,29 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router';
-import { 
-  Search, 
-  Filter, 
-  Calendar, 
-  FileText, 
-  MapPin, 
-  User, 
-  Eye, 
-  CheckCircle, 
-  XCircle,
-  Clock,
+import ReportDetailDrawer from '@/components/ReportDetailsDrawer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { UPDATE_REPORT_STATUS } from '@/routes/serverEndpoint';
+import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
+import axiosService from '@/utils/axiosService';
+import {
+  Calendar,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Eye,
+  FileText,
+  Filter,
+  MapPin,
+  Search,
+  User,
+  XCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import ReportDetailDrawer from '@/components/ReportDetailsDrawer';
-import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
-import { UPDATE_REPORT_STATUS } from '@/routes/serverEndpoint';
-import axiosService from '@/utils/axiosService';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 
 const PAllReports = () => {
@@ -44,13 +42,13 @@ const PAllReports = () => {
   
   useEffect(() => {
     dispatch(fetchAllCrimeReports());
-  }, [dispatch]);
+  }, []);
   
   const reportData = reports ? [...reports] : [];
   const userProvince = user?.province;
   
   const provinceReports = reportData.filter(report => 
-    report.province?.toUpperCase() === userProvince?.toUpperCase()
+    report.province?.toUpperCase() === userProvince?.toUpperCase() && report.status === 'pending'
   );
   
   const uniqueCrimeTypes = [...new Set(provinceReports.map(report => report.crimeType))].sort();
@@ -109,30 +107,6 @@ const PAllReports = () => {
   
   const goToFirstPage = () => setCurrentPage(1);
   const goToLastPage = () => setCurrentPage(totalPages);
-  
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case "pending":
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-          <Clock className="h-3 w-3 mr-1" />
-          Needs Action
-        </Badge>;
-      case "in-progress":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          In Progress
-        </Badge>;
-      case "resolved":
-        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          Resolved
-        </Badge>;
-      case "rejected":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          Rejected
-        </Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
   
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -235,8 +209,8 @@ const PAllReports = () => {
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">All Reports</h1>
-        <p className="text-gray-600 mt-2">View and manage all crime reports from {userProvince}</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Pending Reports</h1>
+        <p className="text-gray-600 mt-2">View and manage pending crime reports from {userProvince}</p>
       </div>
       
       <div className="border-t border-gray-200 my-6"></div>
@@ -244,7 +218,7 @@ const PAllReports = () => {
       <div className="mb-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-5 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input 
               placeholder="Search by Report ID, crime type, location, reporter..." 
               className="pl-9"
@@ -302,7 +276,7 @@ const PAllReports = () => {
         
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-600">
-            Showing {indexOfFirstReport + 1}-{Math.min(indexOfLastReport, filteredReports.length)} of {filteredReports.length} reports
+            Showing {indexOfFirstReport + 1}-{Math.min(indexOfLastReport, filteredReports.length)} of {filteredReports.length} pending reports
             {(searchTerm || startDate || endDate || selectedCrimeType !== 'all') && ' (filtered)'}
           </p>
           <Button variant="outline" className="gap-2" onClick={handleClearFilters}>
@@ -324,7 +298,6 @@ const PAllReports = () => {
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Report ID</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Crime Type</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Location</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Reporter</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
@@ -349,9 +322,6 @@ const PAllReports = () => {
                           <MapPin className="h-4 w-4 text-gray-400" />
                           <span className="truncate max-w-[200px]">{report.locationAddress}</span>
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {getStatusBadge(report.status)}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
@@ -379,54 +349,33 @@ const PAllReports = () => {
                             View
                           </Button>
                           
-                          {report.status === 'pending' && (
-                            <>
-                              <Button 
-                                onClick={() => handleStatusUpdate(report._id, 'in-progress')} 
-                                variant="default" 
-                                size="sm"
-                                disabled={updatingReportId === report._id || updatingReportId}
-                              >
-                                {updatingReportId === report._id ? (
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                ) : (
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                )}
-                                {updatingReportId === report._id ? 'Processing...' : 'Accept'}
-                              </Button>
-                              
-                              <Button 
-                                onClick={() => handleStatusUpdate(report._id, 'rejected')} 
-                                variant="destructive" 
-                                size="sm"
-                                disabled={updatingReportId === report._id || updatingReportId}
-                              >
-                                {updatingReportId === report._id ? (
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                ) : (
-                                  <XCircle className="h-4 w-4 mr-1" />
-                                )}
-                                {updatingReportId === report._id ? 'Processing...' : 'Reject'}
-                              </Button>
-                            </>
-                          )}
+                          <Button 
+                            onClick={() => handleStatusUpdate(report._id, 'in-progress')} 
+                            variant="default" 
+                            size="sm"
+                            disabled={updatingReportId === report._id || updatingReportId}
+                          >
+                            {updatingReportId === report._id ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                            )}
+                            {updatingReportId === report._id ? 'Processing...' : 'Accept'}
+                          </Button>
                           
-                          {report.status === 'in-progress' && (
-                            <Button 
-                              onClick={() => handleStatusUpdate(report._id, 'resolved')} 
-                              variant="default" 
-                              size="sm"
-                              disabled={updatingReportId === report._id || updatingReportId}
-                              className="bg-emerald-600 hover:bg-emerald-700"
-                            >
-                              {updatingReportId === report._id ? (
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                              )}
-                              {updatingReportId === report._id ? 'Processing...' : 'Resolve'}
-                            </Button>
-                          )}
+                          <Button 
+                            onClick={() => handleStatusUpdate(report._id, 'rejected')} 
+                            variant="destructive" 
+                            size="sm"
+                            disabled={updatingReportId === report._id || updatingReportId}
+                          >
+                            {updatingReportId === report._id ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-1" />
+                            )}
+                            {updatingReportId === report._id ? 'Processing...' : 'Reject'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -504,11 +453,11 @@ const PAllReports = () => {
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No reports found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No pending reports found</h3>
             <p className="text-gray-600 mb-6">
               {searchTerm || startDate || endDate || selectedCrimeType !== 'all'
                 ? 'Try adjusting your search or filter criteria'
-                : `No reports found in ${userProvince} yet`}
+                : `No pending reports found in ${userProvince} yet`}
             </p>
             {(searchTerm || startDate || endDate || selectedCrimeType !== 'all') && (
               <div className="flex gap-3 justify-center">

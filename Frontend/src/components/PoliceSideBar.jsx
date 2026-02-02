@@ -11,10 +11,13 @@ import {
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logoutUser } from '@/store/slices/userSlice';
+import { useDispatch } from 'react-redux';
 
 const PoliceSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
@@ -42,6 +45,7 @@ const PoliceSidebar = () => {
   ];
 
   const handleLogout = () => {
+     dispatch(logoutUser());
     navigate('/');
   };
 

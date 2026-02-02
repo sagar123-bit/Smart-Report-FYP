@@ -204,6 +204,50 @@ static deleteReport = async (req, res) => {
     });
   }
 };
+
+static updateReportStatus = async (req, res) => {
+  try {
+    const authUser = req.user;
+    const { reportId } = req.params;
+    const { status } = req.body;
+
+    if (!authUser) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const report = await CrimeReport.findById(reportId);
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    if (!["in-progress", "rejected", "resolved"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    report.status = status;
+    report.assignedTo = authUser._id;
+
+    if (status === "in-progress") {
+      report.acceptedAt = new Date();
+    }
+
+    if (status !== "in-progress") {
+      report.acceptedAt = null;
+    }
+
+    await report.save();
+
+    return res.status(200).json({
+      message: "Report status updated successfully",
+      report,
+    });
+  } catch (error) {
+    console.error("Update Report Status Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 }
 
 export default CrimeReportController;

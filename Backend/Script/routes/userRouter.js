@@ -7,6 +7,7 @@ import uploadCrimeEvidence from "../services/multer/uploadCrimeEvidence.js";
 import getAllUsers from "../controllers/getAllUsers.js";
 import getAllCrimeReports from "../controllers/getAllCrimeReport.js";
 import { updateUserStatus } from "../controllers/updateUserStatus.js";
+import { verifyPolice } from "../controllers/handleVerifyPolice.js";
 
 const userRouter= Router();
 
@@ -24,5 +25,6 @@ userRouter.get("/get-all-reports",getAllCrimeReports);
 userRouter.patch("/update-user-report/:reportId",uploadCrimeEvidence.array("evidences", 5),CrimeReportController.updateReport);
 userRouter.delete("/delete-report/:reportId",CrimeReportController.deleteReport);
 userRouter.patch("/update-user-status/:userId",updateUserStatus);
+userRouter.patch("/verify-police/:userId",verifyPolice);
 
 export default userRouter;

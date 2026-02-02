@@ -21,9 +21,12 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
 import axiosService from "@/utils/axiosService";
 import { USER_BEFORE_REGISTER } from "@/routes/serverEndpoint";
+import { fetchAllUsers } from "@/store/slices/getAllUsers";
+import { useDispatch } from "react-redux";
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [userType, setUserType] = useState("citizen");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -111,6 +114,7 @@ const Register = () => {
     // console.log(formData);
     try {
       const response = await axiosService.post(USER_BEFORE_REGISTER, formData);
+      await dispatch(fetchAllUsers());
       toast.success(
         response?.data?.message || "Registration successful! Please verify your email."
       );

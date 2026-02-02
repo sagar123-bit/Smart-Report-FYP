@@ -25,3 +25,4 @@ export const GET_ALL_CRIME_REPORTS = `${BASE_URL}/user/get-all-reports`
 export const UPDATE_CRIME_REPORT=`${BASE_URL}/user/update-user-report`;
 export const DELETE_CRIME_REPORT=`${BASE_URL}/user/delete-report`;
 export const UPDATE_USER_STATUS=`${BASE_URL}/user/update-user-status`;
+export const VERIFY_POLICE=`${BASE_URL}/user/verify-police`;

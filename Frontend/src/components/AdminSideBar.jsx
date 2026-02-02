@@ -10,6 +10,7 @@ import {
   Users,
   X
 } from 'lucide-react';
+import path from 'path';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -42,12 +43,17 @@ const AdminSidebar = () => {
       path: '/admindashboard/adminreports',
       icon: FileText,
     },
+    {
+      name: "Verify Police",
+      path: "/admindashboard/verify-police",
+      icon: Shield,
+    }
   ];
 
   const handleLogout = () => {
     dispatch(logoutUser());
-        dispatch(fetchAuthUser());
-        navigate('/login');
+    dispatch(fetchAuthUser());
+    navigate('/login');
   };
 
   const toggleMobileMenu = () => {

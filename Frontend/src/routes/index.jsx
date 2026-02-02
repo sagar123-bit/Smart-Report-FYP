@@ -21,6 +21,7 @@ import APolices from "@/pages/APolices";
 import VerifyToken from "@/pages/VerifyToken";
 import ChangePassword from "@/pages/ChangePassword";
 import NotFoundPage from "@/pages/NotFound";
+import AVerifyPolice from "@/pages/AVerifyPolice";
 
 
 const router = createBrowserRouter([{
@@ -80,8 +81,8 @@ const router = createBrowserRouter([{
                 element:<APolices/>
             },
             {
-                path:"chats",
-                element:<PChats/>
+                path:"verify-police",
+                element:<AVerifyPolice/>
             }
         ]
     },

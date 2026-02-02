@@ -1,46 +1,33 @@
 import React, { useState } from 'react';
-import { Search, Shield, Mail, MapPin, CheckCircle, Calendar, Eye, Ban, Loader2, XCircle } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { Search, Shield, Mail, MapPin, Calendar, CheckCircle, XCircle, Eye, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
-import axiosService from '@/utils/axiosService';
-import { useDispatch } from 'react-redux';
-import { fetchAllUsers } from '@/store/slices/getAllUsers';
-import { UPDATE_USER_STATUS } from '@/routes/serverEndpoint';
 import UserDetailsDrawer from '@/components/UserDetailsDrawer';
+import axiosService from '@/utils/axiosService';
+import { fetchAllUsers } from '@/store/slices/getAllUsers';
+import { useDispatch } from 'react-redux';
+import { toast } from 'react-toastify';
+import { VERIFY_POLICE } from '@/routes/serverEndpoint';
 
-const APolices = () => {
+const AVerifyPolice = () => {
+  const { users } = useSelector(state => state?.allUsers);
+  const dispatch = useDispatch();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [loadingUserId, setLoadingUserId] = useState(null);
-  const dispatch = useDispatch();
 
-  const { users } = useSelector(state => state?.allUsers);
-
-  const policeUsers = users?.filter(user => 
+  const pendingPolice = users?.filter(user => 
     user.userType === "police" && 
-    user.policeData?.status === "verified"
+    user.policeData?.status === "pending"
   ) || [];
 
-  const stats = {
-    total: policeUsers.length,
-    active: policeUsers.filter(user => user.status === "active").length,
-    banned: policeUsers.filter(user => user.status === "banned").length
-  };
-
   const filterUsers = () => {
-    let filtered = policeUsers;
-
-    if (activeTab === 'active') {
-      filtered = filtered.filter(user => user.status === "active");
-    } else if (activeTab === 'banned') {
-      filtered = filtered.filter(user => user.status === "banned");
-    }
+    let filtered = pendingPolice;
 
     if (searchTerm) {
       filtered = filtered.filter(user => 
@@ -76,19 +63,23 @@ const APolices = () => {
     setIsDrawerOpen(true);
   };
 
-  const handleUserStatus = async (userId, status, userName) => {
+  const handleVerification = async (userId, type) => {
     if (loadingUserId) return;
     
     setLoadingUserId(userId);
     try {
-      const response = await axiosService.patch(`${UPDATE_USER_STATUS}/${userId}`, { status }, { withCredentials: true });
+      const response = await axiosService.patch(`${VERIFY_POLICE}/${userId}`, 
+        { status: type === 'accept' ? 'verified' : 'rejected' }, 
+        { withCredentials: true }
+      );
+      
       if (response.status === 200) {
         await dispatch(fetchAllUsers());
-        toast.success(response?.data?.message || `Police officer ${status === 'banned' ? 'banned' : 'unbanned'} successfully.`);
+        toast.success(response?.data?.message || `Police officer ${type === 'accept' ? 'verified' : 'rejected'} successfully.`);
       }
     } catch (error) {
-      console.error("Error updating user status:", error);
-      toast.error(error?.response?.data?.message || "Failed to update user status.");
+      console.error("Error updating verification status:", error);
+      toast.error(error?.response?.data?.message || `Failed to ${type === 'accept' ? 'verify' : 'reject'} police officer.`);
     } finally {
       setLoadingUserId(null);
     }
@@ -104,17 +95,11 @@ const APolices = () => {
     });
   };
 
-  const tabs = [
-    { id: 'all', label: 'All Officers', count: stats.total },
-    { id: 'active', label: 'Active', count: stats.active },
-    { id: 'banned', label: 'Banned', count: stats.banned }
-  ];
-
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Police Officers Management</h1>
-        <p className="text-gray-600 mt-2">View and manage all verified police officers</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Police Verification</h1>
+        <p className="text-gray-600 mt-2">Review and verify pending police officer registrations</p>
       </div>
 
       <div className="border-t border-gray-200 my-6"></div>
@@ -123,30 +108,36 @@ const APolices = () => {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Total Officers</p>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-gray-600 text-sm">Pending Verifications</p>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900">{pendingPolice.length}</p>
             </div>
-            <Shield className="h-10 w-10 text-blue-500" />
+            <Shield className="h-10 w-10 text-amber-500" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Active Officers</p>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.active}</p>
+              <p className="text-gray-600 text-sm">This Month</p>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900">
+                {pendingPolice.filter(user => {
+                  const date = new Date(user.createdAt);
+                  const now = new Date();
+                  return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                }).length}
+              </p>
             </div>
-            <CheckCircle className="h-10 w-10 text-green-500" />
+            <Calendar className="h-10 w-10 text-blue-500" />
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Banned Officers</p>
-              <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.banned}</p>
+              <p className="text-gray-600 text-sm">Awaiting Review</p>
+              <p className="text-2xl md:text-3xl font-bold text-gray-900">{filteredPolice.length}</p>
             </div>
-            <Ban className="h-10 w-10 text-red-500" />
+            <Eye className="h-10 w-10 text-purple-500" />
           </div>
         </div>
       </div>
@@ -184,22 +175,6 @@ const APolices = () => {
             </div>
           </div>
         </div>
-
-        <div className="flex border-b border-gray-200 overflow-x-auto">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -210,9 +185,9 @@ const APolices = () => {
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[200px]">Officer</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[150px]">Police Details</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[150px]">Location</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[120px]">Joined</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[120px]">Applied On</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[120px]">Status</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[180px]">Actions</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 min-w-[220px]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -221,20 +196,21 @@ const APolices = () => {
                   <tr key={officer._id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 min-w-[200px]">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Shield className="h-4 w-4 text-blue-600" />
+                        <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                          <Shield className="h-4 w-4 text-amber-600" />
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium truncate">{officer.userName}</p>
                           <p className="text-sm text-gray-500 truncate">{officer.email}</p>
+                          <p className="text-xs text-gray-400 truncate">{officer.phoneNumber}</p>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 min-w-[150px]">
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{officer.policeData?.policeId || 'N/A'}</p>
-                        <p className="text-sm text-gray-500 truncate">{officer.policeData?.station || 'N/A'}</p>
-                        <p className="text-xs text-gray-400 truncate">{officer.policeData?.rank || 'N/A'}</p>
+                        <p className="font-medium truncate">ID: {officer.policeData?.policeId || 'N/A'}</p>
+                        <p className="text-sm text-gray-500 truncate">Station: {officer.policeData?.station || 'N/A'}</p>
+                        <p className="text-xs text-gray-400 truncate">Rank: {officer.policeData?.rank || 'N/A'}</p>
                       </div>
                     </td>
                     <td className="py-3 px-4 min-w-[150px]">
@@ -247,26 +223,13 @@ const APolices = () => {
                       {formatDate(officer.createdAt)}
                     </td>
                     <td className="py-3 px-4 min-w-[120px]">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        officer.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {officer.status === 'active' ? (
-                          <>
-                            <CheckCircle className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span>Active</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span>Banned</span>
-                          </>
-                        )}
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span className="h-2 w-2 rounded-full bg-yellow-500 mr-1"></span>
+                        Pending Review
                       </span>
                     </td>
-                    <td className="py-3 px-4 min-w-[180px]">
-                      <div className="flex gap-2">
+                    <td className="py-3 px-4 min-w-[220px]">
+                      <div className="flex gap-2 flex-wrap">
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -275,43 +238,42 @@ const APolices = () => {
                           disabled={loadingUserId === officer._id}
                         >
                           <Eye className="h-3 w-3" />
-                          View
+                          View Details
                         </Button>
-                        {officer.status === 'active' ? (
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            className="gap-1 flex-shrink-0"
-                            onClick={() => handleUserStatus(officer?._id, 'banned', officer.userName)}
-                            disabled={loadingUserId === officer._id}
-                          >
-                            {loadingUserId === officer._id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Ban className="h-3 w-3" />
-                            )}
-                            <span className="whitespace-nowrap">
-                              {loadingUserId === officer._id ? 'Processing...' : 'Ban'}
-                            </span>
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="default" 
-                            size="sm" 
-                            className="gap-1 bg-green-600 hover:bg-green-700 flex-shrink-0"
-                            onClick={() => handleUserStatus(officer?._id, 'active', officer.userName)}
-                            disabled={loadingUserId === officer._id}
-                          >
-                            {loadingUserId === officer._id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <CheckCircle className="h-3 w-3" />
-                            )}
-                            <span className="whitespace-nowrap">
-                              {loadingUserId === officer._id ? 'Processing...' : 'Unban'}
-                            </span>
-                          </Button>
-                        )}
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="gap-1 bg-green-600 hover:bg-green-700 flex-shrink-0"
+                          onClick={() => handleVerification(officer?._id, 'accept')}
+                          disabled={loadingUserId === officer._id}
+                        >
+                          {loadingUserId === officer._id && officer._id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
+                          <span className="whitespace-nowrap">
+                            {loadingUserId === officer._id ? 'Processing...' : 'Accept'}
+                          </span>
+                        </Button>
+                        
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="gap-1 flex-shrink-0"
+                          onClick={() => handleVerification(officer?._id, 'reject')}
+                          disabled={loadingUserId === officer._id}
+                        >
+                          {loadingUserId === officer._id && officer._id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          <span className="whitespace-nowrap">
+                            {loadingUserId === officer._id ? 'Processing...' : 'Reject'}
+                          </span>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -321,9 +283,9 @@ const APolices = () => {
                   <td colSpan={6} className="py-8 text-center">
                     <div className="max-w-md mx-auto">
                       <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No police officers found</h3>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No pending verifications</h3>
                       <p className="text-gray-600">
-                        {searchTerm || startDate || endDate ? 'Try adjusting your search criteria' : 'No police officers registered yet'}
+                        {searchTerm || startDate || endDate ? 'Try adjusting your search criteria' : 'All police officers have been verified'}
                       </p>
                     </div>
                   </td>
@@ -341,6 +303,6 @@ const APolices = () => {
       />
     </div>
   );
-};
+}
 
-export default APolices;
+export default AVerifyPolice;

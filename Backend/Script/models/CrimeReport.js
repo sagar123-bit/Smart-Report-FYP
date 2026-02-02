@@ -76,6 +76,10 @@ const crimeReportSchema = new Schema(
       type: coordinatesSchema,
       required: true,
     },
+      province: {
+      type: String,
+      required: true,
+    },
 
     evidenceUrls: {
       type: [String],

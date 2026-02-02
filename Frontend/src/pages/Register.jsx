@@ -139,8 +139,8 @@ const Register = () => {
   };
 
   const provinces = [
-    "Province 1",
-    "Province 2",
+    "Koshi",
+    "Madesh",
     "Bagmati",
     "Gandaki",
     "Lumbini",

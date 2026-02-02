@@ -85,6 +85,7 @@ class CrimeReportController {
       incidentDate,
       incidentTime,
       locationAddress,
+      province, 
       latitude,
       longitude,
       existingEvidences = [],
@@ -96,6 +97,7 @@ class CrimeReportController {
     if (incidentDate) report.incidentDate = new Date(incidentDate);
     if (incidentTime) report.incidentTime = incidentTime;
     if (locationAddress) report.locationAddress = locationAddress;
+    if (province) report.province = province; 
 
     if (latitude && longitude) {
       report.coordinates = {
@@ -141,6 +143,8 @@ class CrimeReportController {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 static deleteReport = async (req, res) => {
   try {
     const authUser = req.user;

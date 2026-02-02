@@ -1,4 +1,5 @@
 import { CREATE_CRIME_REPORT, UPDATE_CRIME_REPORT } from "@/routes/serverEndpoint";
+import { fetchAllCrimeReports } from "@/store/slices/getAllReports";
 import axiosService from "@/utils/axiosService";
 import { ArrowLeft, File, FileText, Image, Trash2, Upload, Video, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -11,7 +12,6 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
-import { fetchAllCrimeReports } from "@/store/slices/getAllReports";
 
 const ReportCrime = () => {
   const navigate = useNavigate();
@@ -31,12 +31,23 @@ const ReportCrime = () => {
   const markerRef = useRef(null);
   const [mapInitialized, setMapInitialized] = useState(false);
   
+  const provinces = [
+    "Koshi",
+    "Madesh",
+    "Bagmati",
+    "Gandaki",
+    "Lumbini",
+    "Karnali",
+    "Sudurpashchim"
+  ];
+
   const [formData, setFormData] = useState({
     crimeType: "",
     description: "",
     incidentDate: "",
     incidentTime: "",
     locationAddress: "",
+    province: "",
     latitude: "",
     longitude: ""
   });
@@ -79,6 +90,7 @@ const ReportCrime = () => {
             new Date(reportToEdit.incidentDate).toISOString().split('T')[0] : "",
           incidentTime: reportToEdit.incidentTime || "",
           locationAddress: reportToEdit.locationAddress || "",
+          province: reportToEdit.province || "",
           latitude: reportToEdit.coordinates?.latitude?.toString() || reportToEdit.latitude?.toString() || "",
           longitude: reportToEdit.coordinates?.longitude?.toString() || reportToEdit.longitude?.toString() || ""
         });
@@ -419,6 +431,12 @@ const ReportCrime = () => {
       return;
     }
 
+    if (!formData.province) {
+      toast.error("Please select province.");
+      setIsLoading(false);
+      return;
+    }
+
     const keptExistingFiles = existingEvidencePaths.length - removedEvidencePaths.length;
     const totalFiles = keptExistingFiles + evidenceFiles.length;
     
@@ -435,6 +453,7 @@ const ReportCrime = () => {
     formDataToSend.append('incidentDate', formData.incidentDate);
     formDataToSend.append('incidentTime', formData.incidentTime);
     formDataToSend.append('locationAddress', formData.locationAddress);
+    formDataToSend.append('province', formData.province);
     formDataToSend.append('latitude', formData.latitude);
     formDataToSend.append('longitude', formData.longitude);
     
@@ -500,6 +519,7 @@ const ReportCrime = () => {
           incidentDate: today,
           incidentTime: now,
           locationAddress: "",
+          province: "",
           latitude: "",
           longitude: ""
         });
@@ -655,6 +675,28 @@ const ReportCrime = () => {
                     className="cursor-text"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="province">Province *</Label>
+                <Select
+                  value={formData.province}
+                  onValueChange={(value) => handleChange("province", value)}
+                  key={formData.province || "default"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province">
+                      {formData.province || "Select province"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provinces.map((province) => (
+                      <SelectItem key={province} value={province}>
+                        {province}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-4">

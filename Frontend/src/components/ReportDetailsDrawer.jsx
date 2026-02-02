@@ -29,7 +29,8 @@ import {
   Phone,
   Shield,
   User,
-  X
+  X,
+  Navigation
 } from 'lucide-react';
 import { useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
@@ -49,10 +50,12 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
     switch(status) {
       case "pending":
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
-      case "in progress":
+      case "in-progress":
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
       case "resolved":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Resolved</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -62,10 +65,12 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
     switch(status) {
       case "pending":
         return <ClockIcon className="h-4 w-4" />;
-      case "in progress":
+      case "in-progress":
         return <AlertCircle className="h-4 w-4" />;
       case "resolved":
         return <CheckCircle className="h-4 w-4" />;
+      case "rejected":
+        return <X className="h-4 w-4" />;
       default:
         return <ClockIcon className="h-4 w-4" />;
     }
@@ -77,7 +82,9 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } catch {
       return "Invalid Date";
@@ -157,9 +164,13 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                         <span className="font-medium text-right">{report.locationAddress}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-gray-600">Province:</span>
+                        <span className="font-medium">{report.province || "Not specified"}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-600">Coordinates:</span>
                         <span className="font-medium">
-                          {report.coordinates?.latitude?.toFixed(4)}, {report.coordinates?.longitude?.toFixed(4)}
+                          {report.coordinates?.latitude?.toFixed(6)}, {report.coordinates?.longitude?.toFixed(6)}
                         </span>
                       </div>
                       {report.coordinates?.latitude && report.coordinates?.longitude && (
@@ -177,7 +188,8 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                             <Marker position={[report.coordinates.latitude, report.coordinates.longitude]}>
                               <Popup>
                                 Crime Location<br />
-                                {report.locationAddress}
+                                {report.locationAddress}<br />
+                                Province: {report.province}
                               </Popup>
                             </Marker>
                           </MapContainer>
@@ -200,7 +212,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                         <span className="text-gray-600">Status:</span>
                         <span className="flex items-center gap-1">
                           {getStatusIcon(report.status)}
-                          <span className="capitalize">{report.status}</span>
+                          <span className="capitalize">{report.status?.replace('-', ' ')}</span>
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -361,7 +373,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-700">
-                            {report.reportedBy?.province || "Unknown"}, {report.reportedBy?.district || "Unknown"}
+                            {report.reportedBy?.district || "Unknown"}, {report.reportedBy?.province || "Unknown"}
                           </span>
                         </div>
                       </div>
@@ -376,12 +388,28 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                     {report.assignedTo ? (
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
-                          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Shield className="h-6 w-6 text-blue-600" />
-                          </div>
+                          {report.assignedTo?.userImage ? (
+                            <img 
+                              src={`${serverUrl}/${report.assignedTo.userImage}`}
+                              alt={report.assignedTo.userName}
+                              className="h-12 w-12 rounded-full"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Shield className="h-6 w-6 text-blue-600" />
+                            </div>
+                          )}
                           <div>
-                            <p className="font-medium">{report.assignedTo}</p>
+                            <p className="font-medium">{report.assignedTo?.userName || "Unknown Officer"}</p>
                             <p className="text-sm text-gray-600">Police Officer</p>
+                            {report.assignedTo?.policeData && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {report.assignedTo.policeData.rank}
+                                </Badge>
+                                <span className="text-xs text-gray-500">{report.assignedTo.policeData.station}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         

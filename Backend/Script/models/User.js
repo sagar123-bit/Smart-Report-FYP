@@ -24,6 +24,7 @@ export const policeSchema = new Schema(
      status: {
       type: String,
       default: "pending",
+      enum: ["pending", "verified"],
       required: function () {
         return this.userType === "police";
       },
@@ -93,6 +94,11 @@ const UserSchema = new Schema(
     type: Date,
     default: null,
     required: false,
+  },
+  status:{
+    type:String,
+    enum:["active","banned"],
+    default:"active",
   }
   },
   { timestamps: true }

@@ -6,47 +6,91 @@ import {
   VictoryTooltip,
   VictoryLegend,
   VictoryPie,
-  VictoryLabel
+  VictoryLabel,
+  VictoryLine
 } from 'victory';
-import { FileText, Clock, User, Shield } from 'lucide-react';
+import { FileText, Clock, User, Shield, Users, UserCheck, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router';
+import { useSelector } from 'react-redux';
 
 const ADashboard = () => {
-  const provinceData = [
-    { x: 'Koshi', y: 45 },
-    { x: 'Madhesh', y: 32 },
-    { x: 'Bagmati', y: 78 },
-    { x: 'Gandaki', y: 25 },
-    { x: 'Lumbini', y: 41 },
-    { x: 'Sudurpaschim', y: 19 },
-  ];
+  const { users, loading: userLoading } = useSelector(state => state?.allUsers);
+  const { reports, loading: reportLoading } = useSelector(state => state?.allReports);
+
+  const currentYear = new Date().getFullYear();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const filteredUsers = users?.filter(user => 
+    user.status === "active" && 
+    (user.userType === "citizen" || 
+     (user.userType === "police" && user.policeData?.status === "verified"))
+  ) || [];
+
+  const allReports = reports || [];
+
+  const citizens = filteredUsers.filter(user => user.userType === "citizen");
+  const police = filteredUsers.filter(user => user.userType === "police");
+  const totalUsers = citizens.length + police.length;
+
+  const pendingReports = allReports.filter(report => report.status === "pending");
+  const inProgressReports = allReports.filter(report => report.status === "in-progress");
+  const resolvedReports = allReports.filter(report => report.status === "resolved");
+  const totalReports = allReports.length;
+
+  const provinceNames = ["province-1", "province-2", "province-3", "province-4", "province-5", "province-6", "province-7"];
+  const provinceReports = provinceNames.map(province => ({
+    x: province.replace('province-', 'Province '),
+    y: allReports.filter(report => report.reportedBy?.province === province).length
+  }));
 
   const caseStatusData = [
-    { x: 'Pending', y: 120, color: '#F59E0B' },
-    { x: 'In Progress', y: 85, color: '#3B82F6' },
-    { x: 'Resolved', y: 65, color: '#10B981' },
+    { x: 'Pending', y: pendingReports.length, color: '#F59E0B' },
+    { x: 'In Progress', y: inProgressReports.length, color: '#3B82F6' },
+    { x: 'Resolved', y: resolvedReports.length, color: '#10B981' },
   ];
 
-  const userData = [
-    { x: 'Citizens', y: 1560 },
-    { x: 'Police Officers', y: 234 },
-  ];
+  const getMonthlyRegistrations = () => {
+    const citizenMonthlyData = new Array(12).fill(0);
+    const policeMonthlyData = new Array(12).fill(0);
+    
+    filteredUsers.forEach(user => {
+      const date = new Date(user.createdAt);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        if (user.userType === "citizen") {
+          citizenMonthlyData[month]++;
+        } else if (user.userType === "police") {
+          policeMonthlyData[month]++;
+        }
+      }
+    });
+    
+    const citizenData = months.map((month, index) => ({
+      x: month,
+      y: citizenMonthlyData[index]
+    }));
+    
+    const policeData = months.map((month, index) => ({
+      x: month,
+      y: policeMonthlyData[index]
+    }));
+    
+    return { citizenData, policeData };
+  };
 
-  const crimeTypeData = [
-    { x: 'Theft', y: 45 },
-    { x: 'Assault', y: 32 },
-    { x: 'Fraud', y: 28 },
-    { x: 'Vandalism', y: 19 },
-    { x: 'Other', y: 36 },
-  ];
+  const { citizenData, policeData } = getMonthlyRegistrations();
 
-  const recentCases = [
-    { id: 'CASE-001', type: 'Theft', location: 'Kathmandu', status: 'Pending', time: '2 hours ago' },
-    { id: 'CASE-002', type: 'Assault', location: 'Pokhara', status: 'In Progress', time: '5 hours ago' },
-    { id: 'CASE-003', type: 'Fraud', location: 'Biratnagar', status: 'Resolved', time: '1 day ago' },
-    { id: 'CASE-004', type: 'Vandalism', location: 'Butwal', status: 'Pending', time: '2 days ago' },
-    { id: 'CASE-005', type: 'Theft', location: 'Dharan', status: 'In Progress', time: '3 days ago' },
-  ];
+  const recentCases = allReports
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+    .map(report => ({
+      id: report.reportId,
+      type: report.crimeType,
+      location: report.locationAddress,
+      status: report.status,
+      time: new Date(report.createdAt).toLocaleDateString(),
+      userId: report.reportedBy?.userId
+    }));
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-8">
@@ -55,7 +99,55 @@ const ADashboard = () => {
         <p className="text-gray-600 mt-2">System-wide analytics and user management</p>
       </div>
 
-      <div className="border-t border-gray-200"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{totalUsers}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <Users className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Citizens</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{citizens.length}</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <UserCheck className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Police Officers</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{police.length}</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <ShieldCheck className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Cases</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{totalReports}</p>
+            </div>
+            <div className="p-3 bg-amber-100 rounded-full">
+              <AlertCircle className="h-6 w-6 text-amber-600" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -78,7 +170,7 @@ const ADashboard = () => {
                 }}
               />
               <VictoryBar
-                data={provinceData}
+                data={provinceReports}
                 style={{
                   data: { fill: "#3B82F6" }
                 }}
@@ -120,14 +212,15 @@ const ADashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Users Distribution</h2>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 col-span-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">User Registration ({currentYear})</h2>
           <div className="h-80">
             <VictoryChart
-              domainPadding={30}
+              domainPadding={20}
               padding={{ top: 40, bottom: 60, left: 60, right: 40 }}
             >
               <VictoryAxis
+                tickFormat={months}
                 style={{
                   tickLabels: { fontSize: 10, padding: 5 }
                 }}
@@ -138,12 +231,20 @@ const ADashboard = () => {
                   tickLabels: { fontSize: 10 }
                 }}
               />
-              <VictoryBar
-                data={userData}
+              <VictoryLine
+                data={citizenData}
                 style={{
-                  data: { fill: "#10B981" }
+                  data: { stroke: "#3B82F6", strokeWidth: 3 }
                 }}
-                labels={({ datum }) => datum.y}
+                labels={({ datum }) => `${datum.y} citizen${datum.y !== 1 ? 's' : ''}`}
+                labelComponent={<VictoryTooltip />}
+              />
+              <VictoryLine
+                data={policeData}
+                style={{
+                  data: { stroke: "#8B5CF6", strokeWidth: 3 }
+                }}
+                labels={({ datum }) => `${datum.y} police officer${datum.y !== 1 ? 's' : ''}`}
                 labelComponent={<VictoryTooltip />}
               />
               <VictoryLegend
@@ -151,45 +252,10 @@ const ADashboard = () => {
                 y={10}
                 orientation="horizontal"
                 gutter={20}
-                data={[{ name: "Users", symbol: { fill: "#10B981" } }]}
-              />
-            </VictoryChart>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Crime Types Distribution</h2>
-          <div className="h-80">
-            <VictoryChart
-              domainPadding={20}
-              padding={{ top: 40, bottom: 60, left: 60, right: 40 }}
-            >
-              <VictoryAxis
-                tickFormat={(tick) => tick}
-                style={{
-                  tickLabels: { fontSize: 10, padding: 5, angle: -45 }
-                }}
-              />
-              <VictoryAxis
-                dependentAxis
-                style={{
-                  tickLabels: { fontSize: 10 }
-                }}
-              />
-              <VictoryBar
-                data={crimeTypeData}
-                style={{
-                  data: { fill: "#8B5CF6" }
-                }}
-                labels={({ datum }) => `${datum.y} cases`}
-                labelComponent={<VictoryTooltip />}
-              />
-              <VictoryLegend
-                x={50}
-                y={10}
-                orientation="horizontal"
-                gutter={20}
-                data={[{ name: "Cases", symbol: { fill: "#8B5CF6" } }]}
+                data={[
+                  { name: "Citizens", symbol: { fill: "#3B82F6" } },
+                  { name: "Police", symbol: { fill: "#8B5CF6" } }
+                ]}
               />
             </VictoryChart>
           </div>
@@ -206,7 +272,7 @@ const ADashboard = () => {
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Type</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Location</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Time</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
               </tr>
             </thead>
             <tbody>
@@ -226,13 +292,13 @@ const ADashboard = () => {
                   <td className="py-3 px-4 text-gray-700">{caseItem.location}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      caseItem.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
-                      caseItem.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                      caseItem.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                      caseItem.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
                       'bg-green-100 text-green-800'
                     }`}>
-                      {caseItem.status === 'Pending' && <Clock className="h-3 w-3 mr-1" />}
-                      {caseItem.status === 'In Progress' && <User className="h-3 w-3 mr-1" />}
-                      {caseItem.status === 'Resolved' && <Shield className="h-3 w-3 mr-1" />}
+                      {caseItem.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                      {caseItem.status === 'in-progress' && <User className="h-3 w-3 mr-1" />}
+                      {caseItem.status === 'resolved' && <Shield className="h-3 w-3 mr-1" />}
                       {caseItem.status}
                     </span>
                   </td>

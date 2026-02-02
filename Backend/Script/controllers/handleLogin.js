@@ -14,16 +14,28 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
+  return res.status(404).json({ message: "User not found" });
+}
+
+if (user.status === "banned") {
+  return res.status(403).json({ message: "Your account has been banned" });
+}
+
+if (
+  user.userType === "police" &&
+  user.policeData &&
+  user.policeData.status === "pending"
+) {
+  return res
+    .status(403)
+    .json({ message: "Please wait for account verification" });
+}
 
     const isPasswordValid = await argon2.verify(user.password, password);
 
     if (!isPasswordValid) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: "Invalid  password",
       });
     }
 

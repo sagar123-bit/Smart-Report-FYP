@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router';
-import { 
-  LayoutDashboard,
-  Users,
-  Shield,
-  FileText,
-  MessageSquare,
-  HelpCircle,
-  Menu,
-  X,
-  Settings,
-  LogOut
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchAuthUser, logoutUser } from '@/store/slices/userSlice';
+import {
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Shield,
+  Users,
+  X
+} from 'lucide-react';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 const AdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
@@ -44,7 +45,9 @@ const AdminSidebar = () => {
   ];
 
   const handleLogout = () => {
-    navigate('/');
+    dispatch(logoutUser());
+        dispatch(fetchAuthUser());
+        navigate('/login');
   };
 
   const toggleMobileMenu = () => {
@@ -87,7 +90,7 @@ const AdminSidebar = () => {
             </div>
             <div>
               <h1 className="font-bold text-lg text-gray-900">Admin Portal</h1>
-              <p className="text-sm text-gray-600">System Management</p>
+              <p className="text-sm text-gray-600">Smart Report</p>
             </div>
           </div>
         </div>

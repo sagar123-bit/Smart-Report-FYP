@@ -23,6 +23,7 @@ import ChangePassword from "@/pages/ChangePassword";
 import NotFoundPage from "@/pages/NotFound";
 import AVerifyPolice from "@/pages/AVerifyPolice";
 import CitizenChat from "@/pages/CitizenChat";
+import PoliceProfile from "@/pages/PoliceProfile";
 
 
 const router = createBrowserRouter([{
@@ -114,6 +115,10 @@ const router = createBrowserRouter([{
             {
                 path:"chats",
                 element:<PChats/>
+            },
+            {
+                path: "profile-setting",
+                element: <PoliceProfile/>
             }
         ]
     },

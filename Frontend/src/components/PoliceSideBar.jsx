@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Settings,
   Trash2,
   X
 } from 'lucide-react';
@@ -137,6 +138,11 @@ const PoliceSidebar = () => {
       name: 'Chats',
       path: '/policedashboard/chats',
       icon: MessageSquare,
+    },
+    {
+      name: 'Profile Settings',
+      path: '/policedashboard/profile-setting',
+      icon: Settings,
     },
   ];
 

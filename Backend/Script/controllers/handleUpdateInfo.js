@@ -2,77 +2,51 @@ import User from "../models/User.js";
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const authUser = req.user; 
-    // console.log("Authenticated User:", authUser);
-
-    if (!authUser) {
-      return res.status(401).json({
-        message: "Unauthorized",
-      });
-    }
-
+    const userId = req.user.id;
     const {
       userName,
       phoneNumber,
       province,
       district,
-      policeData,
+      policeData
     } = req.body;
 
-    if (!userName || !phoneNumber || !province || !district) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-      });
+    const updateFields = {};
+
+    if (userName !== undefined) updateFields.userName = userName;
+    if (phoneNumber !== undefined) updateFields.phoneNumber = phoneNumber;
+    if (province !== undefined) updateFields.province = province;
+    if (district !== undefined) updateFields.district = district;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (phoneNumber.length !== 10) {
-      return res.status(400).json({
-        message: "Phone number must be 10 digits",
-      });
-    }
-
-
-    const updateFields = {
-      userName,
-      phoneNumber,
-      province,
-      district,
-    };
-
-    if (authUser.userType === "police") {
-      if (!policeData?.rank || !policeData?.station) {
-        return res.status(400).json({
-          message: "Police rank and station are required",
-        });
-      }
-
+    if (user.userType === "police" && policeData) {
       updateFields.policeData = {
-        rank: policeData.rank,
-        station: policeData.station,
+        policeId: policeData.policeId || user.policeData?.policeId,
+        rank: policeData.rank || user.policeData?.rank,
+        station: policeData.station || user.policeData?.station,
+        status: user.policeData?.status || "pending"
       };
     }
 
-    if (authUser.userType !== "police") {
-      updateFields.$unset = { policeData: "" };
-    }
-
     const updatedUser = await User.findByIdAndUpdate(
-      authUser._id,
+      userId,
       updateFields,
-      {
-        new: true,
-        runValidators: true,
-      }
+      { new: true, runValidators: true }
     ).select("-password -resetToken -resetTokenExpires");
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Profile updated successfully",
-      user: updatedUser,
+      user: updatedUser
     });
   } catch (error) {
-    console.error("Update profile error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
+    console.error("Error updating user profile:", error);
+    res.status(500).json({
+      message: "Failed to update profile",
+      error: error.message
     });
   }
 };

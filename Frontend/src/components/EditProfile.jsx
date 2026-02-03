@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,11 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "react-toastify";
-import axiosService from "@/utils/axiosService";
 import { UPDATE_USER_PROFILE } from "@/routes/serverEndpoint";
-import { User, Shield, Badge, MapPin, Building } from "lucide-react";
 import { fetchAuthUser } from "@/store/slices/userSlice";
+import axiosService from "@/utils/axiosService";
+import { Badge, Building, MapPin, Phone, Shield, User } from "lucide-react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 const EditProfileDialog = ({ open, onOpenChange }) => {
   const userData = useSelector(state => state?.user?.user);
@@ -36,13 +36,14 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
     district: userData?.district || "",
     ...(userData?.userType === "police" && {
       rank: userData?.policeData?.rank || "",
-      station: userData?.policeData?.station || ""
+      station: userData?.policeData?.station || "",
+      policeId: userData?.policeData?.policeId || ""
     })
   });
 
   const provinces = [
-    "Province 1",
-    "Province 2",
+    "Koshi",
+    "Madesh",
     "Bagmati",
     "Gandaki",
     "Lumbini",
@@ -75,7 +76,8 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
         ...updateData,
         policeData: {
           rank: formData.rank,
-          station: formData.station
+          station: formData.station,
+          policeId: formData.policeId
         }
       };
     }
@@ -104,7 +106,8 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
       district: userData?.district || "",
       ...(userData?.userType === "police" && {
         rank: userData?.policeData?.rank || "",
-        station: userData?.policeData?.station || ""
+        station: userData?.policeData?.station || "",
+        policeId: userData?.policeData?.policeId || ""
       })
     });
     onOpenChange(false);
@@ -160,7 +163,7 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="phoneNumber" className="text-gray-700 font-medium flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
                     Phone Number
                   </Label>
                   <Input
@@ -215,10 +218,25 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
 
                 {userData?.userType === "police" && (
                   <>
+                    <div className="space-y-2">
+                      <Label htmlFor="policeId" className="text-gray-700 font-medium flex items-center gap-2">
+                        <Badge className="h-4 w-4" />
+                        Police ID
+                      </Label>
+                      <Input
+                        id="policeId"
+                        value={formData.policeId}
+                        onChange={(e) => handleChange("policeId", e.target.value)}
+                        required
+                        className="rounded-lg"
+                        placeholder="Enter police ID"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="rank" className="text-gray-700 font-medium flex items-center gap-2">
-                          <Badge className="h-4 w-4" />
+                          <Shield className="h-4 w-4" />
                           Rank
                         </Label>
                         <Input
@@ -227,6 +245,7 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
                           onChange={(e) => handleChange("rank", e.target.value)}
                           required
                           className="rounded-lg"
+                          placeholder="e.g., ASI, SI"
                         />
                       </div>
 
@@ -241,6 +260,7 @@ const EditProfileDialog = ({ open, onOpenChange }) => {
                           onChange={(e) => handleChange("station", e.target.value)}
                           required
                           className="rounded-lg"
+                          placeholder="Enter station name"
                         />
                       </div>
                     </div>

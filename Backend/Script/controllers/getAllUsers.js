@@ -5,6 +5,7 @@ const getAllUsers = async (req, res) => {
     const users = await User.find()
       .select("-password -__v"); 
 
+
     return res.status(200).json({
       message: "Users fetched successfully",
       count: users.length,

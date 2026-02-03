@@ -24,6 +24,7 @@ export const markAllNotificationsRead = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await axiosService.patch(MARK_ALL_READ_NOTIFICATIONS, {}, { withCredentials: true });
+            console.log("Mark All Read Response:", response);
 
             if (response?.status === 200) {
                 // toast.success(response.data.message || "All notifications marked as read");

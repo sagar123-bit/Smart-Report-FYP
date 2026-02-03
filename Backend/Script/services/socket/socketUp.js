@@ -65,67 +65,70 @@ const initSocketServer = (httpServer) => {
     });
 
     client.on("postMessage", async (payload) => {
-      try {
-        const { roomId, text, type, mediaUrl, sender } = payload;
+  try {
+    const { roomId, text, type, mediaUrl, sender } = payload;
 
-        if (!roomId || !sender) {
-          return client.emit("sendError");
-        }
+    if (!roomId || !sender) {
+      return client.emit("sendError");
+    }
 
-        const room = await Room.findById(roomId);
-        if (!room) {
-          return client.emit("sendError");
-        }
+    const room = await Room.findById(roomId);
+    if (!room) return client.emit("sendError");
 
-        const allowed = room.participants.some(
-          (id) => id.toString() === sender
-        );
+    const allowed = room.participants.some((id) => id.toString() === sender);
+    if (!allowed) return client.emit("sendError");
 
-        if (!allowed) {
-          return client.emit("sendError");
-        }
+    const msgPayload = {
+      from: sender,
+      room: roomId,
+      kind: type || "text",
+    };
 
-        const msgPayload = {
-          from: sender,
-          room: roomId,
-          kind: type || "text",
-        };
+    if (msgPayload.kind === "text") {
+      if (!text?.trim()) return client.emit("sendError");
+      msgPayload.body = text;
+    } else if (msgPayload.kind === "image" || msgPayload.kind === "file") {
+      if (!mediaUrl) return client.emit("sendError");
+      msgPayload.mediaUrl = mediaUrl;
+    } else {
+      return client.emit("sendError");
+    }
 
-        if (msgPayload.kind === "text") {
-          if (!text?.trim()) {
-            return client.emit("sendError");
-          }
-          msgPayload.body = text;
-        }
+    const created = await Message.create(msgPayload);
 
-        if (msgPayload.kind === "image") {
-          if (!mediaUrl) {
-            return client.emit("sendError");
-          }
-          msgPayload.mediaUrl = mediaUrl;
-        }
+    room.lastChat = created._id;
+    room.chats.push(created._id);
+    await room.save();
 
-        const created = await Message.create(msgPayload);
+    const populated = await Message.findById(created._id).populate(
+      "from",
+      "userName userImage email"
+    );
 
-        room.lastChat = created._id;
-        room.chats.push(created._id);
-        await room.save();
+    io.to(roomId).emit("incomingMessage", populated);
 
-        const populated = await Message.findById(created._id).populate(
-          "from",
-          "userName userImage email"
-        );
-
-        io.to(roomId).emit("incomingMessage", populated);
-
-        client.emit("sentAck", {
-          roomId,
-          messageId: created._id,
+    room.participants.forEach((participantId) => {
+      if (participantId.toString() !== sender) {
+        pushNotification({
+          userId: participantId,
+          title: "New Message",
+          content: `${populated.from.userName} sent a message`,
+          read: false,
         });
-      } catch {
-        client.emit("sendError");
       }
     });
+
+    client.emit("sentAck", {
+      roomId,
+      messageId: created._id,
+    });
+
+  } catch (error) {
+    console.error("Error posting message:", error);
+    client.emit("sendError");
+  }
+});
+
 
     client.on("disconnect", () => {
       for (const [key, value] of onlineMap.entries()) {

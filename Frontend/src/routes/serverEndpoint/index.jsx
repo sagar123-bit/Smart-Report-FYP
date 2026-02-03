@@ -32,3 +32,9 @@ export const GET_ALL_NOTIFICATIONS=`${BASE_URL}/user/get-all-notifications`;
 export const DELETE_SINGLE_NOTIFICATION=`${BASE_URL}/user/delete-single-notification`;
 export const DELETE_ALL_NOTIFICATIONS=`${BASE_URL}/user/delete-all-notifications`;
 export const MARK_ALL_READ_NOTIFICATIONS=`${BASE_URL}/user/notifications/mark-all-read`;
+
+export const CREATE_CRIME_REPORT_ROOM=`${BASE_URL}/user/create-room`;
+export const GET_MY_CRIME_REPORT_ROOMS=`${BASE_URL}/user/get-user-rooms`;
+export const DELETE_CRIME_REPORT_ROOM=`${BASE_URL}/user/delete-room`;
+export const GET_CRIME_REPORT_ROOM_MESSAGES=`${BASE_URL}/user/get-messages`;
+export const UPLOAD_MESSAGE_FILE=`${BASE_URL}/user/upload-message-file`;

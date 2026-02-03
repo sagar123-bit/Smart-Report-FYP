@@ -22,6 +22,7 @@ import VerifyToken from "@/pages/VerifyToken";
 import ChangePassword from "@/pages/ChangePassword";
 import NotFoundPage from "@/pages/NotFound";
 import AVerifyPolice from "@/pages/AVerifyPolice";
+import CitizenChat from "@/pages/CitizenChat";
 
 
 const router = createBrowserRouter([{
@@ -58,6 +59,10 @@ const router = createBrowserRouter([{
             path:"myreport",
             element:<MyReports/>
         },
+        {
+            path:"report-chat",
+            element:<CitizenChat/>
+        }
     ]
     },
     {

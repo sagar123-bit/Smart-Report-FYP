@@ -12,7 +12,7 @@ const messageSchema = new Schema(
 
     kind: {
       type: String,
-      enum: ["text", "image"],
+      enum: ["text", "image", "file"],
       required: true,
     },
 
@@ -26,7 +26,7 @@ const messageSchema = new Schema(
     mediaUrl: {
       type: String,
       required: function () {
-        return this.kind === "image";
+        return this.kind === "image" || this.kind === "file";
       },
     },
 

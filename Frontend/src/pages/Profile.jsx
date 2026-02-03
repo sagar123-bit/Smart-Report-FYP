@@ -15,6 +15,7 @@ import {
   LogOut,
   Mail,
   MapPin,
+  MessageSquare,
   Phone,
   Trash2,
   Upload,
@@ -234,7 +235,16 @@ const Profile = () => {
                   )}
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-8 space-y-3">
+                  <Button 
+                    onClick={() => navigate("/report-chat")}
+                    variant="outline" 
+                    className="w-full gap-2 cursor-pointer"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Chat with Police
+                  </Button>
+                  
                   <Button 
                     variant="outline" 
                     className="w-full gap-2 hover:bg-red-50 hover:text-red-600 cursor-pointer"

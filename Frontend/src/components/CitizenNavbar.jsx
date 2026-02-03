@@ -31,10 +31,11 @@ const CitizenNavbar = () => {
   const userData = useSelector(state => state?.user?.user);
   const { notifications: allNotifications, loading } = useSelector(state => state.allNotifications);
   
-   const languages = [
+  const languages = [
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'ne', name: 'नेपाली (Nepali)', flag: '🇳🇵' },
   ];
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
@@ -52,14 +53,20 @@ const CitizenNavbar = () => {
   
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setIsNotificationOpen(false);
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target) &&
+        !event.target.closest('[data-notification-button]')
+      ) {
+        if(isNotificationOpen){
+          setIsNotificationOpen(false);
+        }
       }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isNotificationOpen]);
   
   const baseNavItems = [
     { id: 1, name: 'Home', path: '/' },
@@ -74,8 +81,6 @@ const CitizenNavbar = () => {
     ...baseNavItems,
     ...(userData ? authNavItems : [])
   ];
-
- 
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('preferredLanguage');
@@ -95,8 +100,10 @@ const CitizenNavbar = () => {
     setIsMenuOpen(false);
   };
 
-  const handleNotificationClick = () => {
-    setIsNotificationOpen(!isNotificationOpen);
+  const handleNotificationClick = (e) => {
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+    setIsNotificationOpen(prev => !prev);
   };
 
   const handleMarkAllRead = () => {
@@ -229,10 +236,11 @@ const CitizenNavbar = () => {
             </DropdownMenu>
 
             {userData && (
-              <div className="relative" ref={notificationRef}>
+              <div className="relative">
                 <button
                   onClick={handleNotificationClick}
                   className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  data-notification-button
                 >
                   <Bell className="h-5 w-5 text-gray-600" />
                   {unreadCount > 0 && (
@@ -243,7 +251,7 @@ const CitizenNavbar = () => {
                 </button>
                 
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       {userNotifications.length > 0 && (
@@ -268,6 +276,7 @@ const CitizenNavbar = () => {
                           <div 
                             key={notification._id} 
                             className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
+                            onClick={() => setIsNotificationOpen(false)}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -283,7 +292,10 @@ const CitizenNavbar = () => {
                                     {formatTimeAgo(notification.createdAt)}
                                   </span>
                                   <button
-                                    onClick={(e) => handleDeleteNotification(notification._id, e)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteNotification(notification._id, e);
+                                    }}
                                     className="text-gray-400 hover:text-red-500 p-1"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -367,10 +379,11 @@ const CitizenNavbar = () => {
 
           <div className="md:hidden flex items-center">
             {userData && (
-              <div className="relative mr-2" ref={notificationRef}>
+              <div className="relative mr-2">
                 <button
                   onClick={handleNotificationClick}
                   className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  data-notification-button
                 >
                   <Bell className="h-5 w-5 text-gray-600" />
                   {unreadCount > 0 && (
@@ -381,7 +394,7 @@ const CitizenNavbar = () => {
                 </button>
                 
                 {isNotificationOpen && (
-                  <div className="fixed top-16 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="fixed top-16 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       {userNotifications.length > 0 && (
@@ -406,6 +419,7 @@ const CitizenNavbar = () => {
                           <div 
                             key={notification._id} 
                             className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
+                            onClick={() => setIsNotificationOpen(false)}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -421,7 +435,10 @@ const CitizenNavbar = () => {
                                     {formatTimeAgo(notification.createdAt)}
                                   </span>
                                   <button
-                                    onClick={(e) => handleDeleteNotification(notification._id, e)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteNotification(notification._id, e);
+                                    }}
                                     className="text-gray-400 hover:text-red-500 p-1"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -479,9 +496,9 @@ const CitizenNavbar = () => {
       <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t shadow-lg">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.id}
-              href={item.path}
+              to={item.path}
               onClick={closeMenu}
               className={`block px-3 py-3 rounded-md text-base font-medium transition duration-150 border-b border-gray-100 flex items-center ${
                 isActivePath(item.path)
@@ -491,7 +508,7 @@ const CitizenNavbar = () => {
             >
               {item.icon && item.icon}
               {item.name}
-            </a>
+            </Link>
           ))}
 
           <div className="px-3 py-3 border-b border-gray-100">
@@ -557,21 +574,21 @@ const CitizenNavbar = () => {
             </>
           ) : (
             <>
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 onClick={closeMenu}
                 className="block px-3 py-3 rounded-md text-base font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition duration-150 border-b border-gray-100"
               >
                 Register
-              </a>
+              </Link>
 
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 onClick={closeMenu}
                 className="block px-3 py-3 rounded-md text-base font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition duration-150 mt-2"
               >
                 Login
-              </a>
+              </Link>
             </>
           )}
         </div>

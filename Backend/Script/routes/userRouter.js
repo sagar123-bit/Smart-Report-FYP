@@ -12,6 +12,12 @@ import { getAllNotifications } from "../controllers/getAllNotification.js";
 import { deleteNotification } from "../controllers/deleteSingleNotification.js";
 import { clearAllNotifications } from "../controllers/clearAllNotification.js";
 import { markAllNotificationsRead } from "../controllers/markNotificationRead.js";
+import { getMyCrimeReportRooms } from "../controllers/getUsersRoom.js";
+import { createCrimeReportRoom } from "../controllers/createRoom.js";
+import { deleteCrimeReportRoom } from "../controllers/deleteRoom.js";
+import { getCrimeReportRoomMessages } from "../controllers/getRoomRelatedMessages.js";
+import uploadMessageFile from "../services/multer/uploadMessageFiles.js";
+import uploadChatFile from "../controllers/handleUploadChatFile.js";
 
 const userRouter= Router();
 
@@ -36,5 +42,10 @@ userRouter.delete("/delete-single-notification/:notificationId",deleteNotificati
 userRouter.delete("/delete-all-notifications",clearAllNotifications);
 userRouter.patch("/notifications/mark-all-read", markAllNotificationsRead);
 
+userRouter.post("/create-room",createCrimeReportRoom);
+userRouter.get("/get-user-rooms/:userId",getMyCrimeReportRooms);
+userRouter.get("/get-messages/:roomId", getCrimeReportRoomMessages);
+userRouter.delete("/delete-room/:roomId", deleteCrimeReportRoom);
+userRouter.post("/upload-message-file",uploadMessageFile.single("file"), uploadChatFile);
 
 export default userRouter;

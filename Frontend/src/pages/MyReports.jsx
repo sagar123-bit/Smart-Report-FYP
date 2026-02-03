@@ -1,5 +1,5 @@
 import ReportDetailDrawer from '@/components/ReportDetailsDrawer';
-import { AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Eye, FileText, Search, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Eye, FileText, MessageSquare, Search, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
@@ -10,7 +10,7 @@ import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import axiosService from '@/utils/axiosService';
-import { DELETE_CRIME_REPORT } from '@/routes/serverEndpoint';
+import { DELETE_CRIME_REPORT, CREATE_CRIME_REPORT_ROOM } from '@/routes/serverEndpoint';
 import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
 import { toast } from 'react-toastify';
 
@@ -30,6 +30,7 @@ const MyReports = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [contacting, setContacting] = useState({});
   const itemsPerPage = 10;
 
   const userReports = crimeReports?.filter(report => 
@@ -40,7 +41,7 @@ const MyReports = () => {
   const stats = {
     total: userReports.length,
     pending: userReports.filter(r => r.status === "pending").length,
-    inProgress: userReports.filter(r => r.status === "in progress").length,
+    inProgress: userReports.filter(r => r.status === "in-progress").length,
     resolved: userReports.filter(r => r.status === "resolved").length,
     rejected: userReports.filter(r => r.status === "rejected").length,
   };
@@ -92,7 +93,7 @@ const MyReports = () => {
     switch(status) {
       case "pending":
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
-      case "in progress":
+      case "in-progress":
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
       case "resolved":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Resolved</Badge>;
@@ -107,7 +108,7 @@ const MyReports = () => {
     switch(status) {
       case "pending":
         return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Medium</Badge>;
-      case "in progress":
+      case "in-progress":
         return <Badge variant="destructive">High</Badge>;
       case "resolved":
         return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Low</Badge>;
@@ -142,7 +143,7 @@ const MyReports = () => {
   };
 
   const getAssignedTo = (report) => {
-    if (report.assignedTo) return `Officer ${report.assignedTo}`;
+    if (report.assignedTo) return `Officer ${report.assignedTo.userName}`;
     return "Not assigned";
   };
 
@@ -161,6 +162,35 @@ const MyReports = () => {
     catch(error){
       console.error("Error deleting report:", error);
       toast.error(error?.response?.data?.message || "Failed to delete report");
+    }
+  };
+
+  const handleContactPolice = async (reportId, assignedTo) => {
+    if (!user || !assignedTo) {
+      toast.error("No police officer assigned to this report");
+      return;
+    }
+
+    setContacting(prev => ({ ...prev, [reportId]: true }));
+    try {
+      const response = await axiosService.post(
+        CREATE_CRIME_REPORT_ROOM,
+        {
+          otherUserId: assignedTo._id,
+          reportId: reportId,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.status === 201 || response.status === 200) {
+        toast.success(response.data.message || "Chat room created successfully!");
+        navigate(`/report-chat?room=${response.data.room._id}`);
+      }
+    } catch (error) {
+      console.error("Contact police error:", error);
+      toast.error(error.response?.data?.message || "Failed to create chat room");
+    } finally {
+      setContacting(prev => ({ ...prev, [reportId]: false }));
     }
   };
 
@@ -336,7 +366,7 @@ const MyReports = () => {
                   <TabsList>
                     <TabsTrigger value="all">All ({filteredReports.length})</TabsTrigger>
                     <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-                    <TabsTrigger value="in progress">In Progress ({stats.inProgress})</TabsTrigger>
+                    <TabsTrigger value="in-progress">In Progress ({stats.inProgress})</TabsTrigger>
                     <TabsTrigger value="resolved">Resolved ({stats.resolved})</TabsTrigger>
                     <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
                   </TabsList>
@@ -382,7 +412,7 @@ const MyReports = () => {
                   </div>
                 </div>
 
-                {["all", "pending", "in progress", "resolved", "rejected"].map((tab) => (
+                {["all", "pending", "in-progress", "resolved", "rejected"].map((tab) => (
                   <TabsContent key={tab} value={tab} className="mt-0">
                     {isLoading ? (
                       <div className="text-center py-12">
@@ -398,7 +428,7 @@ const MyReports = () => {
                                 <FileText className="h-8 w-8 text-gray-400" />
                               ) : tab === "pending" ? (
                                 <Clock className="h-8 w-8 text-gray-400" />
-                              ) : tab === "in progress" ? (
+                              ) : tab === "in-progress" ? (
                                 <AlertCircle className="h-8 w-8 text-gray-400" />
                               ) : tab === "resolved" ? (
                                 <CheckCircle className="h-8 w-8 text-gray-400" />
@@ -470,6 +500,18 @@ const MyReports = () => {
                                                 <Eye className="h-4 w-4 mr-2" />
                                                 View
                                               </Button>
+                                              {(report.status === "in-progress" || report.status === "resolved") && report.assignedTo && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleContactPolice(report._id, report.assignedTo)}
+                                                  disabled={contacting[report._id]}
+                                                  className="cursor-pointer"
+                                                >
+                                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                                  {contacting[report._id] ? 'Creating...' : 'Contact'}
+                                                </Button>
+                                              )}
                                               {report.status === "pending" && (
                                                 <>
                                                   <Button
@@ -532,6 +574,18 @@ const MyReports = () => {
                                                 <Eye className="h-4 w-4 mr-2" />
                                                 View
                                               </Button>
+                                              {(tab === "in-progress" || tab === "resolved") && report.assignedTo && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleContactPolice(report._id, report.assignedTo)}
+                                                  disabled={contacting[report._id]}
+                                                  className="cursor-pointer"
+                                                >
+                                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                                  {contacting[report._id] ? 'Creating...' : 'Contact'}
+                                                </Button>
+                                              )}
                                               {tab === "pending" && (
                                                 <>
                                                   <Button

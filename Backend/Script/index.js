@@ -9,6 +9,7 @@ import authRouter from './routes/authRouter.js';
 import authMiddleware from './middleware/authMiddleware.js';
 import path from 'path';
 import userRouter from './routes/userRouter.js';
+import initSocketServer from './services/socket/socketUp.js';
 
 
 const MONGO_URL=process.env.MONGODB_URL;
@@ -48,6 +49,7 @@ const runApp = async () => {
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+     initSocketServer(server);
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);

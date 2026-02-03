@@ -28,3 +28,7 @@ export const UPDATE_USER_STATUS=`${BASE_URL}/user/update-user-status`;
 export const VERIFY_POLICE=`${BASE_URL}/user/verify-police`;
 
 export const UPDATE_REPORT_STATUS=`${BASE_URL}/user/update-report-status`;
+export const GET_ALL_NOTIFICATIONS=`${BASE_URL}/user/get-all-notifications`;
+export const DELETE_SINGLE_NOTIFICATION=`${BASE_URL}/user/delete-single-notification`;
+export const DELETE_ALL_NOTIFICATIONS=`${BASE_URL}/user/delete-all-notifications`;
+export const MARK_ALL_READ_NOTIFICATIONS=`${BASE_URL}/user/notifications/mark-all-read`;

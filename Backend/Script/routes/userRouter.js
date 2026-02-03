@@ -8,6 +8,10 @@ import getAllUsers from "../controllers/getAllUsers.js";
 import getAllCrimeReports from "../controllers/getAllCrimeReport.js";
 import { updateUserStatus } from "../controllers/updateUserStatus.js";
 import { verifyPolice } from "../controllers/handleVerifyPolice.js";
+import { getAllNotifications } from "../controllers/getAllNotification.js";
+import { deleteNotification } from "../controllers/deleteSingleNotification.js";
+import { clearAllNotifications } from "../controllers/clearAllNotification.js";
+import { markAllNotificationsRead } from "../controllers/markNotificationRead.js";
 
 const userRouter= Router();
 
@@ -27,5 +31,10 @@ userRouter.delete("/delete-report/:reportId",CrimeReportController.deleteReport)
 userRouter.patch("/update-user-status/:userId",updateUserStatus);
 userRouter.patch("/verify-police/:userId",verifyPolice);
 userRouter.patch("/update-report-status/:reportId",CrimeReportController.updateReportStatus);
+userRouter.get("/get-all-notifications",getAllNotifications);
+userRouter.delete("/delete-single-notification/:notificationId",deleteNotification);
+userRouter.delete("/delete-all-notifications",clearAllNotifications);
+userRouter.patch("/notifications/mark-all-read", markAllNotificationsRead);
+
 
 export default userRouter;

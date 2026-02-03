@@ -27,10 +27,10 @@ import {
   MapPin,
   Maximize2,
   Phone,
+  PhoneCall,
   Shield,
   User,
-  X,
-  Navigation
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
@@ -428,6 +428,31 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                               <span className="font-medium">{formatDate(report.acceptedAt)}</span>
                             </div>
                           )}
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                            <PhoneCall className="h-4 w-4" />
+                            Contact Information
+                          </h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-700">{report.assignedTo?.email || "Not provided"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-700">{report.assignedTo?.phoneNumber || "Not provided"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-700">
+                                {report.assignedTo?.district || "Unknown"}, {report.assignedTo?.province || "Unknown"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (

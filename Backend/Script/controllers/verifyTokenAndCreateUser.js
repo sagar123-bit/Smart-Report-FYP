@@ -1,6 +1,7 @@
-import UserBeforeRegister from "../models/userBeforeRegister.js";
-import User from "../models/User.js";
 import { nanoid } from "nanoid";
+import User from "../models/User.js";
+import UserBeforeRegister from "../models/userBeforeRegister.js";
+import { pushNotification } from "../services/socket/socketUp.js";
 
 const verifyUserAndCreateAccount = async (req, res) => {
   try {
@@ -64,6 +65,19 @@ const verifyUserAndCreateAccount = async (req, res) => {
     const newUser = await User.create(userPayload);
 
     await UserBeforeRegister.deleteOne({ email });
+
+    const adminUsers = await User.find({ userType: "admin" });
+
+    for (const admin of adminUsers) {
+      const payload = {
+        userId: admin._id,
+        title: "New User Registration",
+        content: `User ${newUser.userName} (${newUser.userType}) has just registered.`,
+        read: false,
+      };
+
+      await pushNotification(payload);
+    }
 
     return res.status(201).json({
       message: "Account verified and created successfully",

@@ -6,6 +6,7 @@ import { fetchAuthUser } from './store/slices/userSlice'
 import { fetchAllUsers } from './store/slices/getAllUsers'
 import { fetchAllCrimeReports } from './store/slices/getAllReports'
 import LoadingScreen from './components/CommonSkeleton'
+import { fetchNotifications } from './store/slices/getAllNotifications'
 
 const App = () => {
   const dispatch = useDispatch();
@@ -14,6 +15,8 @@ const App = () => {
   const {reports: allReports = [], loading: allReportsLoading} = allReportsState || {};
    const userState = useSelector(state=>state?.user);
   const {user:userData,loading}=userState||{};
+
+  const {notifications,loading:notificationLoading}=useSelector(state=>state.allNotifications);
   
   useEffect(()=>{
        const fetchData=async()=>{
@@ -26,6 +29,9 @@ const App = () => {
         }
         if(allReports?.length===0){
           await dispatch(fetchAllCrimeReports());
+        }
+        if(notifications?.length===0){
+          await dispatch(fetchNotifications());
         }
       }
       fetchData();

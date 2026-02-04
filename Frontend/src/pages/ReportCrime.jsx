@@ -12,12 +12,14 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
+import { useTranslation } from "react-i18next";
 
 const ReportCrime = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const editReportId = searchParams.get('edit');
+  const { t } = useTranslation();
   
   const userData = useSelector(state => state?.user?.user);
   const crimeReportsState = useSelector(state => state?.allReports);
@@ -593,7 +595,7 @@ const ReportCrime = () => {
                   className="cursor-pointer"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Reports
+                  {t("backToReports")}
                 </Button>
               )}
               <img 
@@ -603,20 +605,19 @@ const ReportCrime = () => {
               />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {isEditMode ? "Update Report" : "Create Report"}
+              {isEditMode ? t("updateReport") : t("createReport")}
             </CardTitle>
             <CardDescription>
               {isEditMode 
-                ? "Update the details of your crime report" 
-                : "Fill in the details to file a crime report"
-              }
+                ? t("updateReportDetails") 
+                : t("fillReportDetails")}
             </CardDescription>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
-                <Label htmlFor="crimeType">Crime Type *</Label>
+                <Label htmlFor="crimeType">{t("crimeType")} *</Label>
                 <Select
                   value={formData.crimeType}
                   onValueChange={(value) => handleChange("crimeType", value)}
@@ -641,7 +642,7 @@ const ReportCrime = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">{t("description")} *</Label>
                 <Textarea
                   id="description"
                   placeholder="Provide detailed description..."
@@ -654,7 +655,7 @@ const ReportCrime = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="incidentDate">Date *</Label>
+                  <Label htmlFor="incidentDate">{t("date")} *</Label>
                   <Input
                     id="incidentDate"
                     type="date"
@@ -665,7 +666,7 @@ const ReportCrime = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="incidentTime">Time *</Label>
+                  <Label htmlFor="incidentTime">{t("time")} *</Label>
                   <Input
                     id="incidentTime"
                     type="time"
@@ -678,7 +679,7 @@ const ReportCrime = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="province">Province *</Label>
+                <Label htmlFor="province">{t("province")} *</Label>
                 <Select
                   value={formData.province}
                   onValueChange={(value) => handleChange("province", value)}
@@ -701,7 +702,7 @@ const ReportCrime = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="locationAddress">Location Address *</Label>
+                  <Label htmlFor="locationAddress">{t("locationAddress")} *</Label>
                   <Input
                     id="locationAddress"
                     placeholder="Enter location address"
@@ -714,7 +715,7 @@ const ReportCrime = () => {
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Select Crime Location on Map *</Label>
+                    <Label>{t("selectLocationOnMap")} *</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -723,11 +724,11 @@ const ReportCrime = () => {
                       className="cursor-pointer text-xs"
                       disabled={locationLoading}
                     >
-                      {locationLoading ? "Detecting..." : "📍 Use My Location"}
+                      {locationLoading ? t("detecting") : `📍 ${t("useMyLocation")}`}
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500 mb-2">
-                    Click on the map to mark the exact crime location
+                    {t("clickMapMarkLocation")}
                   </p>
                   
                   <div id="map" className="h-[400px] border rounded-lg z-10 relative">
@@ -735,7 +736,7 @@ const ReportCrime = () => {
                       <div className="h-full flex items-center justify-center bg-gray-100">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900 mx-auto mb-4"></div>
-                          <p className="text-gray-600">Loading map...</p>
+                          <p className="text-gray-600">{t("loadingMap")}</p>
                         </div>
                       </div>
                     )}
@@ -743,7 +744,7 @@ const ReportCrime = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="space-y-2">
-                      <Label>Latitude *</Label>
+                      <Label>{t("latitude")} *</Label>
                       <Input
                         value={formData.latitude || "Select location..."}
                         readOnly
@@ -751,7 +752,7 @@ const ReportCrime = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Longitude *</Label>
+                      <Label>{t("longitude")} *</Label>
                       <Input
                         value={formData.longitude || "Select location..."}
                         readOnly
@@ -775,7 +776,7 @@ const ReportCrime = () => {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <Label>Upload Evidence (Optional - Max 5 files, 10MB each)</Label>
+                  <Label>{t("uploadEvidence")} (Optional - Max 5 files, 10MB each)</Label>
                   <span className="text-sm text-gray-500">
                     {totalCurrentFiles}/5 files
                   </span>
@@ -784,7 +785,7 @@ const ReportCrime = () => {
                 {isEditMode && existingEvidencePaths.length > 0 && (
                   <div className="mb-4">
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Existing Evidence:
+                      {t("existingEvidence")}:
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {existingEvidencePaths.map((path, index) => {
@@ -965,9 +966,9 @@ const ReportCrime = () => {
                 <div className="flex items-start">
                   <span className="text-red-600 text-xl mr-3">⚠️</span>
                   <div>
-                    <h4 className="font-bold text-red-800">Emergency?</h4>
+                    <h4 className="font-bold text-red-800">{t("emergency")}?</h4>
                     <p className="text-red-700">
-                      For immediate emergency, please call <strong className="font-bold">100</strong>.
+                      {t("emergencyCall")}
                     </p>
                     <Button
                       type="button"
@@ -975,7 +976,7 @@ const ReportCrime = () => {
                       onClick={handleEmergency}
                       className="mt-3 cursor-pointer"
                     >
-                      🆘 Emergency SOS
+                      🆘 {t("emergencySOS")}
                     </Button>
                   </div>
                 </div>
@@ -989,7 +990,7 @@ const ReportCrime = () => {
                   className="cursor-pointer"
                   disabled={isLoading}
                 >
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -997,8 +998,8 @@ const ReportCrime = () => {
                   disabled={isLoading}
                 >
                   {isLoading 
-                    ? (isEditMode ? "Updating..." : "Submitting...") 
-                    : (isEditMode ? "Update Report" : "Submit Report")
+                    ? (isEditMode ? t("updating") : t("submitting")) 
+                    : (isEditMode ? t("updateReport") : t("submitReport"))
                   }
                 </Button>
               </div>

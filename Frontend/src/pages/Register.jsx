@@ -23,8 +23,10 @@ import axiosService from "@/utils/axiosService";
 import { USER_BEFORE_REGISTER } from "@/routes/serverEndpoint";
 import { fetchAllUsers } from "@/store/slices/getAllUsers";
 import { useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 const Register = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [userType, setUserType] = useState("citizen");
@@ -32,6 +34,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+
 
   const [citizenForm, setCitizenForm] = useState({
     userName: "",
@@ -56,6 +60,8 @@ const Register = () => {
     confirmPassword: ""
   });
 
+  console.log("Citizen Form:", policeForm);
+
   const handleCitizenChange = (field, value) => {
     setCitizenForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -72,20 +78,20 @@ const Register = () => {
 
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(form.phoneNumber)) {
-      newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+      newErrors.phoneNumber = t('phoneNumberError');
     }
 
     if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters long";
+      newErrors.password = t('passwordLengthError');
     }
 
     if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t('passwordMatchError');
     }
 
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)/;
     if (form.password && !passwordRegex.test(form.password)) {
-      newErrors.password = "Password must contain at least one letter and one number";
+      newErrors.password = t('passwordComplexityError');
     }
 
     setErrors(newErrors);
@@ -116,13 +122,13 @@ const Register = () => {
       const response = await axiosService.post(USER_BEFORE_REGISTER, formData);
       await dispatch(fetchAllUsers());
       toast.success(
-        response?.data?.message || "Registration successful! Please verify your email."
+        response?.data?.message || t('registrationSuccess')
       );
       navigate("/verifytoken", { state: { email: formData.email } });
     } catch (error) {
       console.log(error);
       toast.error(
-        error?.response?.data?.message || "Registration failed. Please try again."
+        error?.response?.data?.message || t('registrationFailed')
       );
     } finally {
       setIsLoading(false);
@@ -138,14 +144,15 @@ const Register = () => {
     }
   };
 
+  // Keep province values in English for backend, but show translated labels
   const provinces = [
-    "Koshi",
-    "Madesh",
-    "Bagmati",
-    "Gandaki",
-    "Lumbini",
-    "Karnali",
-    "Sudurpashchim"
+    { value: "Koshi", label: t('koshi') },
+    { value: "Madesh", label: t('madhesh') },
+    { value: "Bagmati", label: t('bagmati') },
+    { value: "Gandaki", label: t('gandaki') },
+    { value: "Lumbini", label: t('lumbini') },
+    { value: "Karnali", label: t('karnali') },
+    { value: "Sudurpashchim", label: t('sudurpashchim') }
   ];
 
   return (
@@ -157,9 +164,9 @@ const Register = () => {
             alt="SmartReport Logo"
             className="h-16 w-16 object-contain mb-4"
           />
-          <CardTitle className="text-2xl font-bold text-center">Register</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">{t('register')}</CardTitle>
           <CardDescription className="text-center">
-            Create your SmartReport account
+            {t('createAccount')}
           </CardDescription>
         </CardHeader>
 
@@ -172,7 +179,7 @@ const Register = () => {
                 onClick={() => setUserType("citizen")}
                 className="px-6"
               >
-                Citizen
+                {t('citizen')}
               </Button>
               <Button
                 type="button"
@@ -180,7 +187,7 @@ const Register = () => {
                 onClick={() => setUserType("police")}
                 className="px-6"
               >
-                Police Officer
+                {t('policeOfficer')}
               </Button>
             </div>
           </div>
@@ -189,33 +196,35 @@ const Register = () => {
             {userType === "citizen" ? (
               <>
                 <div className="space-y-2">
-                  <Label>Username</Label>
+                  <Label>{t('username')}</Label>
                   <Input
                     value={citizenForm.userName}
                     onChange={(e) => handleCitizenChange("userName", e.target.value)}
                     required
+                    placeholder={t('usernamePlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{t('email')}</Label>
                   <Input
                     type="email"
                     value={citizenForm.email}
                     onChange={(e) => handleCitizenChange("email", e.target.value)}
                     required
+                    placeholder={t('emailPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Phone Number</Label>
+                  <Label>{t('phoneNumber')}</Label>
                   <Input
                     type="tel"
                     value={citizenForm.phoneNumber}
                     onChange={(e) => handlePhoneNumberChange(e, true)}
                     required
                     maxLength={10}
-                    placeholder="Enter 10 digit number"
+                    placeholder={t('phoneNumberPlaceholder')}
                   />
                   {errors.phoneNumber && (
                     <p className="text-sm text-red-500">{errors.phoneNumber}</p>
@@ -224,18 +233,23 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Province</Label>
+                    <Label>{t('province')}</Label>
                     <Select
                       value={citizenForm.province}
                       onValueChange={(value) => handleCitizenChange("province", value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={t('selectProvince')}>
+                          {citizenForm.province ? 
+                            provinces.find(p => p.value === citizenForm.province)?.label : 
+                            t('selectProvince')
+                          }
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem key={p} value={p.toLowerCase().replace(" ", "-")}>
-                            {p}
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -243,22 +257,23 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>District</Label>
+                    <Label>{t('district')}</Label>
                     <Input
                       value={citizenForm.district}
                       onChange={(e) => handleCitizenChange("district", e.target.value)}
                       required
+                      placeholder={t('districtPlaceholder')}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 relative">
-                    <Label>Password</Label>
+                    <Label>{t('password')}</Label>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Password"
+                        placeholder={t('passwordPlaceholder')}
                         value={citizenForm.password}
                         onChange={(e) => handleCitizenChange("password", e.target.value)}
                         required
@@ -277,11 +292,11 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2 relative">
-                    <Label>Confirm Password</Label>
+                    <Label>{t('confirmPassword')}</Label>
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm Password"
+                        placeholder={t('confirmPasswordPlaceholder')}
                         value={citizenForm.confirmPassword}
                         onChange={(e) => handleCitizenChange("confirmPassword", e.target.value)}
                         required
@@ -304,9 +319,9 @@ const Register = () => {
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label>Username</Label>
+                  <Label>{t('username')}</Label>
                   <Input
-                    placeholder="Username"
+                    placeholder={t('usernamePlaceholder')}
                     value={policeForm.userName}
                     onChange={(e) => handlePoliceChange("userName", e.target.value)}
                     required
@@ -315,18 +330,18 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Police ID</Label>
+                    <Label>{t('policeId')}</Label>
                     <Input
-                      placeholder="Police ID"
+                      placeholder={t('policeIdPlaceholder')}
                       value={policeForm.policeId}
                       onChange={(e) => handlePoliceChange("policeId", e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Rank</Label>
+                    <Label>{t('rank')}</Label>
                     <Input
-                      placeholder="Rank"
+                      placeholder={t('rankPlaceholder')}
                       value={policeForm.rank}
                       onChange={(e) => handlePoliceChange("rank", e.target.value)}
                       required
@@ -336,10 +351,10 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Phone Number</Label>
+                    <Label>{t('phoneNumber')}</Label>
                     <Input
                       type="tel"
-                      placeholder="Phone Number"
+                      placeholder={t('phoneNumberPlaceholder')}
                       value={policeForm.phoneNumber}
                       onChange={(e) => handlePhoneNumberChange(e, false)}
                       required
@@ -350,10 +365,10 @@ const Register = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <Label>{t('email')}</Label>
                     <Input
                       type="email"
-                      placeholder="Email"
+                      placeholder={t('emailPlaceholder')}
                       value={policeForm.email}
                       onChange={(e) => handlePoliceChange("email", e.target.value)}
                       required
@@ -363,18 +378,23 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Province</Label>
+                    <Label>{t('province')}</Label>
                     <Select
                       value={policeForm.province}
                       onValueChange={(v) => handlePoliceChange("province", v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Province" />
+                        <SelectValue placeholder={t('provincePlaceholder')}>
+                          {policeForm.province ? 
+                            provinces.find(p => p.value === policeForm.province)?.label : 
+                            t('provincePlaceholder')
+                          }
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {provinces.map((p) => (
-                          <SelectItem key={p} value={p.toLowerCase().replace(" ", "-")}>
-                            {p}
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -382,9 +402,9 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>District</Label>
+                    <Label>{t('district')}</Label>
                     <Input
-                      placeholder="District"
+                      placeholder={t('districtPlaceholder')}
                       value={policeForm.district}
                       onChange={(e) => handlePoliceChange("district", e.target.value)}
                       required
@@ -392,9 +412,9 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Police Station</Label>
+                    <Label>{t('policeStation')}</Label>
                     <Input
-                      placeholder="Police Station"
+                      placeholder={t('policeStationPlaceholder')}
                       value={policeForm.station}
                       onChange={(e) => handlePoliceChange("station", e.target.value)}
                       required
@@ -404,11 +424,11 @@ const Register = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 relative">
-                    <Label>Password</Label>
+                    <Label>{t('password')}</Label>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Password"
+                        placeholder={t('passwordPlaceholder')}
                         value={policeForm.password}
                         onChange={(e) => handlePoliceChange("password", e.target.value)}
                         required
@@ -427,11 +447,11 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2 relative">
-                    <Label>Confirm Password</Label>
+                    <Label>{t('confirmPassword')}</Label>
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm Password"
+                        placeholder={t('confirmPasswordPlaceholder')}
                         value={policeForm.confirmPassword}
                         onChange={(e) => handlePoliceChange("confirmPassword", e.target.value)}
                         required
@@ -454,12 +474,12 @@ const Register = () => {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Registering..." : "Register"}
+              {isLoading ? t('registering') : t('register')}
             </Button>
 
             <div className="text-center">
               <Button type="button" variant="link" onClick={() => navigate("/login")}>
-                Already have an account? Login here
+                {t('alreadyHaveAccount')}
               </Button>
             </div>
           </form>

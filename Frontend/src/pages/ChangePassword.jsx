@@ -15,8 +15,10 @@ import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 import axiosService from "@/utils/axiosService";
 import { RESET_PASSWORD } from "@/routes/serverEndpoint";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const ChangePassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -63,17 +65,17 @@ const ChangePassword = () => {
     const passwordValidation = validatePassword(formData.password);
 
     if (!passwordValidation.minLength) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = t('passwordMinLengthError');
     } else if (!passwordValidation.hasLetter) {
-      newErrors.password = "Password must contain at least one letter";
+      newErrors.password = t('passwordLetterError');
     } else if (!passwordValidation.hasNumber) {
-      newErrors.password = "Password must contain at least one number";
+      newErrors.password = t('passwordNumberError');
     } else if (!passwordValidation.hasSpecialChar) {
-      newErrors.password = "Password must contain at least one special character";
+      newErrors.password = t('passwordSpecialCharError');
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t('passwordMatchError');
     }
 
     setErrors(newErrors);
@@ -81,45 +83,44 @@ const ChangePassword = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) {
-    return;
-  }
+    if (!validateForm()) {
+      return;
+    }
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const response = await axiosService.post(RESET_PASSWORD, {
-      token: id,                 
-      newPassword: formData.password,
-    });
+    try {
+      const response = await axiosService.post(RESET_PASSWORD, {
+        token: id,                 
+        newPassword: formData.password,
+      });
 
-    toast.success(
-      response?.data?.message || "Password updated successfully"
-    );
+      toast.success(
+        response?.data?.message || t('passwordUpdatedSuccess')
+      );
 
-    setIsSuccess(true);
+      setIsSuccess(true);
 
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
-  } catch (error) {
-    console.error(error);
-    setErrors({
-      submit:
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setErrors({
+        submit:
+          error?.response?.data?.message ||
+          t('resetLinkInvalid'),
+      });
+      toast.error(
         error?.response?.data?.message ||
-        "Reset link is invalid or expired",
-    });
-    toast.error(
-      error?.response?.data?.message ||
-        "Reset link is invalid or expired"
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+          t('resetLinkInvalid')
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!id) {
     return null;
@@ -133,9 +134,9 @@ const ChangePassword = () => {
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <CardTitle className="text-2xl font-bold">Password Changed!</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('passwordChanged')}</CardTitle>
             <CardDescription className="text-gray-600">
-              Your password has been successfully updated.
+              {t('passwordUpdatedDescription')}
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-center">
@@ -143,7 +144,7 @@ const ChangePassword = () => {
               onClick={() => navigate("/login")}
               className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
             >
-              Go to Login
+              {t('goToLogin')}
             </Button>
           </CardFooter>
         </Card>
@@ -160,9 +161,9 @@ const ChangePassword = () => {
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <Lock className="h-8 w-8 text-green-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('setNewPassword')}</CardTitle>
           <CardDescription className="text-gray-600">
-            Create a new secure password for your account
+            {t('createSecurePassword')}
           </CardDescription>
         </CardHeader>
 
@@ -170,14 +171,14 @@ const ChangePassword = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">{t('newPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleChange("password", e.target.value)}
-                    placeholder="Enter new password"
+                    placeholder={t('newPasswordPlaceholder')}
                     className="pr-10"
                   />
                   <button
@@ -197,39 +198,39 @@ const ChangePassword = () => {
                   <div className="flex items-center space-x-2">
                     <div className={`h-2 w-2 rounded-full ${passwordValidation.minLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={`text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-500'}`}>
-                      At least 6 characters
+                      {t('passwordMinLengthRequirement')}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className={`h-2 w-2 rounded-full ${passwordValidation.hasLetter ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={`text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-500'}`}>
-                      At least one letter
+                      {t('passwordLetterRequirement')}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className={`h-2 w-2 rounded-full ${passwordValidation.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={`text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
-                      At least one number
+                      {t('passwordNumberRequirement')}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className={`h-2 w-2 rounded-full ${passwordValidation.hasSpecialChar ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={`text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-500'}`}>
-                      At least one special character
+                      {t('passwordSpecialCharRequirement')}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                    placeholder="Confirm new password"
+                    placeholder={t('confirmPasswordPlaceholder')}
                     className="pr-10"
                   />
                   <button
@@ -262,10 +263,10 @@ const ChangePassword = () => {
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Lock className="h-5 w-5 animate-pulse" />
-                  Updating Password...
+                  {t('updatingPassword')}
                 </span>
               ) : (
-                "Change Password"
+                t('changePassword')
               )}
             </Button>
           </form>
@@ -278,7 +279,7 @@ const ChangePassword = () => {
             onClick={() => navigate("/login")}
             className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
           >
-            Back to Login
+            {t('backToLogin')}
           </Button>
         </CardFooter>
       </Card>

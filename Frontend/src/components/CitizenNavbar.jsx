@@ -7,6 +7,7 @@ import {
 import { logoutUser } from '@/store/slices/userSlice';
 import { Bell, Check, CheckCheck, ChevronDown, FileText, Globe, LogOut, Trash2, UserCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
@@ -27,6 +28,7 @@ const CitizenNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t, i18n } = useTranslation();
 
   const userData = useSelector(state => state?.user?.user);
   const { notifications: allNotifications, loading } = useSelector(state => state.allNotifications);
@@ -69,12 +71,12 @@ const CitizenNavbar = () => {
   }, [isNotificationOpen]);
   
   const baseNavItems = [
-    { id: 1, name: 'Home', path: '/' },
-    { id: 2, name: 'About', path: '/about' },
+    { id: 1, name: 'home', path: '/' },
+    { id: 2, name: 'about', path: '/about' },
   ];
 
   const authNavItems = [
-    { id: 3, name: 'Report Crime', path: '/reportcrime', icon: <FileText className="h-4 w-4 mr-2" /> },
+    { id: 3, name: 'reportCrime', path: '/reportcrime', icon: <FileText className="h-4 w-4 mr-2" /> },
   ];
 
   const navItems = [
@@ -83,14 +85,13 @@ const CitizenNavbar = () => {
   ];
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('preferredLanguage');
-    if (savedLanguage) {
-      const foundLanguage = languages.find(lang => lang.code === savedLanguage);
-      if (foundLanguage) {
-        setSelectedLanguage(foundLanguage);
-      }
+    const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+    const foundLanguage = languages.find(lang => lang.code === savedLanguage);
+    if (foundLanguage) {
+      setSelectedLanguage(foundLanguage);
+      i18n.changeLanguage(savedLanguage);
     }
-  }, []);
+  }, [i18n]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -119,6 +120,7 @@ const CitizenNavbar = () => {
   const handleLanguageChange = (language) => {
     setSelectedLanguage(language);
     localStorage.setItem('preferredLanguage', language.code);
+    i18n.changeLanguage(language.code);
   };
 
   const isActivePath = (path) => {
@@ -185,7 +187,7 @@ const CitizenNavbar = () => {
                   className="h-14 w-14"
                 />
               </div>
-              <span className="text-xl font-bold text-gray-900">SmartReport</span>
+              <span className="text-xl font-bold text-gray-900">{t('smartReport')}</span>
             </Link>
           </div>
 
@@ -201,7 +203,7 @@ const CitizenNavbar = () => {
                 }`}
               >
                 {item.icon && item.icon}
-                {item.name}
+                {t(item.name)}
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-blue-600 transition-all duration-300 ${
                   isActivePath(item.path) ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
@@ -253,7 +255,7 @@ const CitizenNavbar = () => {
                 {isNotificationOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      <h3 className="font-semibold text-gray-900">{t('notifications')}</h3>
                       {userNotifications.length > 0 && (
                         <button
                           onClick={handleClearAllNotifications}
@@ -309,7 +311,7 @@ const CitizenNavbar = () => {
                     ) : (
                       <div className="p-8 text-center">
                         <Bell className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">No notifications</p>
+                        <p className="text-gray-600">{t('noNotifications')}</p>
                         <p className="text-sm text-gray-500 mt-1">You're all caught up!</p>
                       </div>
                     )}
@@ -321,7 +323,7 @@ const CitizenNavbar = () => {
                           className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800"
                         >
                           <CheckCheck className="h-4 w-4" />
-                          Mark All as Read
+                          {t('markAllRead')}
                         </button>
                       </div>
                     )}
@@ -349,12 +351,12 @@ const CitizenNavbar = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
                     <UserCircle className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t('profile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                    <span>{t('logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -364,14 +366,14 @@ const CitizenNavbar = () => {
                   onClick={() => handleNavigate('/register')}
                   className="px-4 py-2 rounded-md text-sm font-medium border border-blue-200 cursor-pointer"
                 >
-                  Register
+                  {t('register')}
                 </Button>
 
                 <Button
                   onClick={() => handleNavigate('/login')}
                   className="px-4 py-2 rounded-md text-white text-sm font-medium shadow-sm hover:shadow cursor-pointer"
                 >
-                  Login
+                  {t('login')}
                 </Button>
               </>
             )}
@@ -396,7 +398,7 @@ const CitizenNavbar = () => {
                 {isNotificationOpen && (
                   <div className="fixed top-16 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      <h3 className="font-semibold text-gray-900">{t('notifications')}</h3>
                       {userNotifications.length > 0 && (
                         <button
                           onClick={handleClearAllNotifications}
@@ -452,7 +454,7 @@ const CitizenNavbar = () => {
                     ) : (
                       <div className="p-8 text-center">
                         <Bell className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">No notifications</p>
+                        <p className="text-gray-600">{t('noNotifications')}</p>
                         <p className="text-sm text-gray-500 mt-1">You're all caught up!</p>
                       </div>
                     )}
@@ -464,7 +466,7 @@ const CitizenNavbar = () => {
                           className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800"
                         >
                           <CheckCheck className="h-4 w-4" />
-                          Mark All as Read
+                          {t('markAllRead')}
                         </button>
                       </div>
                     )}
@@ -507,7 +509,7 @@ const CitizenNavbar = () => {
               }`}
             >
               {item.icon && item.icon}
-              {item.name}
+              {t(item.name)}
             </Link>
           ))}
 
@@ -560,14 +562,14 @@ const CitizenNavbar = () => {
                     className="flex items-center w-full px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50"
                   >
                     <UserCircle className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t('profile')}</span>
                   </button>
                   <button
                     onClick={() => { handleLogout(); closeMenu(); }}
                     className="flex items-center w-full px-3 py-2 rounded-md text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                    <span>{t('logout')}</span>
                   </button>
                 </div>
               </div>
@@ -579,7 +581,7 @@ const CitizenNavbar = () => {
                 onClick={closeMenu}
                 className="block px-3 py-3 rounded-md text-base font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition duration-150 border-b border-gray-100"
               >
-                Register
+                {t('register')}
               </Link>
 
               <Link
@@ -587,7 +589,7 @@ const CitizenNavbar = () => {
                 onClick={closeMenu}
                 className="block px-3 py-3 rounded-md text-base font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition duration-150 mt-2"
               >
-                Login
+                {t('login')}
               </Link>
             </>
           )}

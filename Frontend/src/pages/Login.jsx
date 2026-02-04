@@ -10,8 +10,10 @@ import axiosService from "@/utils/axiosService";
 import ForgotPasswordDialog from "@/components/ForgetPassDialog";
 import { fetchAuthUser } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -24,7 +26,7 @@ const Login = () => {
     setIsLoading(true);
     try {
       const response = await axiosService.post(LOGIN, { email, password }, { withCredentials: true });
-      toast.success(response?.data?.message || "Login successful.");
+      toast.success(response?.data?.message || t('loginSuccessful'));
       await dispatch(fetchAuthUser());
       if (response?.data?.user?.userType === "admin") {
         navigate("/admindashboard");
@@ -35,7 +37,7 @@ const Login = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || "Login failed. Please try again.");
+      toast.error(error?.response?.data?.message || t('loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -62,21 +64,21 @@ const Login = () => {
               />
             </div>
             <CardTitle className="text-2xl font-bold text-center">
-              Login
+              {t('login')}
             </CardTitle>
             <CardDescription className="text-center">
-              Welcome back to SmartReport
+              {t('welcomeBack')}
             </CardDescription>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -85,11 +87,11 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t('passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -102,7 +104,7 @@ const Login = () => {
                 className="w-full cursor-pointer"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? t('loggingIn') : t('login')}
               </Button>
 
               <div className="text-center">
@@ -112,7 +114,7 @@ const Login = () => {
                   onClick={handleForgotPassword}
                   className="cursor-pointer"
                 >
-                  Forgot your password?
+                  {t('forgotPassword')}
                 </Button>
               </div>
 
@@ -123,7 +125,7 @@ const Login = () => {
                   onClick={handleRegister}
                   className="w-full cursor-pointer"
                 >
-                  Don't have an account? Register here
+                  {t('dontHaveAccount')}
                 </Button>
               </div>
             </form>

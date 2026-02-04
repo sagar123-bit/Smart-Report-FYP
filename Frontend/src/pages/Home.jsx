@@ -2,33 +2,35 @@ import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { useTranslation } from "react-i18next";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const userState = useSelector(state => state?.user);
   const { user } = userState || {};
 
   const stats = [
-    { number: "7", label: "Provinces Covered" },
-    { number: "24/7", label: "Support Available" },
-    { number: "100%", label: "Secure Platform" },
-    { number: "Fast", label: "Response Time" },
+    { number: "7", label: t('provincesCovered') },
+    { number: "24/7", label: t('supportAvailable') },
+    { number: "100%", label: t('securePlatform') },
+    { number: t('fast'), label: t('responseTime') },
   ];
 
   const howItWorks = [
-    { step: "1", title: "Register", description: "Create your account as citizen or police" },
-    { step: "2", title: "Report Crime", description: "File a detailed report with evidence" },
-    { step: "3", title: "Track Status", description: "Monitor your case progress in real-time" },
-    { step: "4", title: "Get Resolution", description: "Receive updates until case is resolved" },
+    { step: "1", title: t('register'), description: t('registerDesc') },
+    { step: "2", title: t('reportCrime'), description: t('reportCrimeDesc') },
+    { step: "3", title: t('trackStatus'), description: t('trackStatusDesc') },
+    { step: "4", title: t('getResolution'), description: t('getResolutionDesc') },
   ];
 
   const features = [
-    { title: "Easy Reporting", description: "File crime reports quickly with evidence upload support" },
-    { title: "Real-time Updates", description: "Track your case status and receive notifications" },
-    { title: "Location Tracking", description: "Auto-detect location or manually mark crime locations" },
-    { title: "Direct Communication", description: "Chat directly with police officers handling your case" },
-    { title: "Secure & Private", description: "Your data is encrypted and protected" },
-    { title: "Province-based Access", description: "View cases relevant to your province" },
+    { title: t('easyReporting'), description: t('easyReportingDesc') },
+    { title: t('realTimeUpdates'), description: t('realTimeUpdatesDesc') },
+    { title: t('locationTracking'), description: t('locationTrackingDesc') },
+    { title: t('directCommunication'), description: t('directCommunicationDesc') },
+    { title: t('securePrivate'), description: t('securePrivateDesc') },
+    { title: t('provinceBasedAccess'), description: t('provinceBasedAccessDesc') },
   ];
 
   return (
@@ -48,10 +50,10 @@ const Home = () => {
               />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
-              SmartReport - Nepal's Crime Reporting System
+              {t('homeTitle')}
             </h1>
             <p className="text-xl md:text-2xl mb-10 text-white/90">
-              Report crimes online, track case status, and communicate with police officers securely
+              {t('homeSubtitle')}
             </p>
             {user ? (
               <Button
@@ -59,7 +61,7 @@ const Home = () => {
                 className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
                 size="lg"
               >
-                Report Crime
+                {t('reportCrime')}
               </Button>
             ) : (
               <Button
@@ -67,7 +69,7 @@ const Home = () => {
                 className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
                 size="lg"
               >
-                Login
+                {t('login')}
               </Button>
             )}
           </div>
@@ -89,9 +91,9 @@ const Home = () => {
 
       <div className="bg-gray-50 py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">How It Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">{t('howItWorks')}</h2>
           <p className="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Simple steps to report and track crimes
+            {t('howItWorksDesc')}
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -109,9 +111,9 @@ const Home = () => {
       </div>
 
       <div className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Why Choose SmartReport?</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">{t('whyChoose')}</h2>
         <p className="text-lg text-gray-600 text-center mb-12 max-w-3xl mx-auto">
-          A comprehensive platform designed to make crime reporting efficient and transparent
+          {t('whyChooseDesc')}
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -137,18 +139,18 @@ const Home = () => {
       >
         <div className="absolute inset-0 bg-black/70"></div>
         <div className="container relative mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">Ready to Make a Difference?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">{t('readyToMakeDifference')}</h2>
           <p className="text-xl mb-10 max-w-2xl mx-auto text-white/90">
-            Join thousands of citizens helping make Nepal safer
+            {t('joinThousands')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {user ? (
               <Button
-                onClick={() => navigate("/report")}
+                onClick={() => navigate("/reportcrime")}
                 className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
                 size="lg"
               >
-                Report Crime
+                {t('reportCrime')}
               </Button>
             ) : (
               <>
@@ -157,7 +159,7 @@ const Home = () => {
                   className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
                   size="lg"
                 >
-                  Register Now
+                  {t('registerNow')}
                 </Button>
                 <Button
                   onClick={() => navigate("/login")}
@@ -165,7 +167,7 @@ const Home = () => {
                   className="bg-transparent border-white text-white hover:bg-white/10 px-10 py-6 text-lg font-semibold cursor-pointer"
                   size="lg"
                 >
-                  Login
+                  {t('login')}
                 </Button>
               </>
             )}

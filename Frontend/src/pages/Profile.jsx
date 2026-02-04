@@ -23,6 +23,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
@@ -30,6 +31,7 @@ import { toast } from 'react-toastify';
 const Profile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const userData = useSelector(state => state?.user?.user);
   const crimeReports = useSelector(state=>state?.allReports?.reports);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,8 +126,8 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your account information and settings</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{t('profile')}</h1>
+          <p className="text-gray-600 mt-2">{t('profileDesc')}</p>
         </header>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -159,10 +161,10 @@ const Profile = () => {
                     />
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-gray-900">{userData?.userName || 'User Name'}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{userData?.userName || t('userName')}</h2>
                   <div className="inline-flex items-center gap-2 mt-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
                     <User className="h-3 w-3" />
-                    {userData?.userType || 'Citizen'}
+                    {userData?.userType === 'police' ? t('police') : t('citizen')}
                   </div>
                   
                   <div className="mt-6 space-y-3">
@@ -175,17 +177,17 @@ const Profile = () => {
                       {isLoading ? (
                         <>
                           <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                          Processing...
+                          {t('processing')}
                         </>
                       ) : hasProfileImage ? (
                         <>
                           <Camera className="h-4 w-4" />
-                          Change Profile Image
+                          {t('changeProfileImage')}
                         </>
                       ) : (
                         <>
                           <Upload className="h-4 w-4" />
-                          Set Profile Image
+                          {t('setProfileImage')}
                         </>
                       )}
                     </Button>
@@ -198,7 +200,7 @@ const Profile = () => {
                         className="gap-2 cursor-pointer w-full"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Delete Profile Image
+                        {t('deleteProfileImage')}
                       </Button>
                     )}
                   </div>
@@ -209,13 +211,13 @@ const Profile = () => {
                 <div className="space-y-4">
                   <h3 className="font-semibold text-gray-700 flex items-center gap-2">
                     <Mail className="h-4 w-4" />
-                    Email
+                    {t('email')}
                   </h3>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{userData?.email || 'user@example.com'}</p>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{userData?.email || t('userEmail')}</p>
 
                   <h3 className="font-semibold text-gray-700 flex items-center gap-2 mt-4">
                     <Phone className="h-4 w-4" />
-                    Phone Number
+                    {t('phoneNumber')}
                   </h3>
                   
                   {hasPhoneNumber ? (
@@ -225,9 +227,9 @@ const Profile = () => {
                       <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-amber-800 font-medium mb-1">Phone Number Missing</p>
+                          <p className="text-amber-800 font-medium mb-1">{t('phoneNumberMissing')}</p>
                           <p className="text-amber-700 text-sm">
-                            Please add your phone number by editing your profile.
+                            {t('phoneNumberMissingDesc')}
                           </p>
                         </div>
                       </div>
@@ -242,7 +244,7 @@ const Profile = () => {
                     className="w-full gap-2 cursor-pointer"
                   >
                     <MessageSquare className="h-4 w-4" />
-                    Chat with Police
+                    {t('chatWithPolice')}
                   </Button>
                   
                   <Button 
@@ -251,7 +253,7 @@ const Profile = () => {
                     onClick={handleLogout}
                   >
                     <LogOut className="h-4 w-4" />
-                    Logout
+                    {t('logout')}
                   </Button>
                 </div>
               </CardContent>
@@ -263,31 +265,31 @@ const Profile = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Location Information
+                  {t('locationInformation')}
                 </CardTitle>
                 <CardDescription>
-                  Your registered location details
+                  {t('locationDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="cursor-pointer hover:shadow-sm transition-shadow">
                     <label className="block text-sm font-medium text-gray-600 mb-2">
-                      Province
+                      {t('province')}
                     </label>
                     <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
                       <MapPin className="h-5 w-5 text-blue-600" />
-                      <span className="text-gray-900 font-medium">{userData?.province || 'Not set'}</span>
+                      <span className="text-gray-900 font-medium">{userData?.province || t('notSet')}</span>
                     </div>
                   </div>
                 
                   <div className="cursor-pointer hover:shadow-sm transition-shadow">
                     <label className="block text-sm font-medium text-gray-600 mb-2">
-                      District
+                      {t('district')}
                     </label>
                     <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors">
                       <MapPin className="h-5 w-5 text-green-600" />
-                      <span className="text-gray-900 font-medium">{userData?.district || 'Not set'}</span>
+                      <span className="text-gray-900 font-medium">{userData?.district || t('notSet')}</span>
                     </div>
                   </div>
                 </div>
@@ -298,10 +300,10 @@ const Profile = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Account Statistics
+                  {t('accountStatistics')}
                 </CardTitle>
                 <CardDescription>
-                  Overview of your case history
+                  {t('accountStatisticsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -313,8 +315,8 @@ const Profile = () => {
                       </div>
                       <span className="text-3xl font-bold text-gray-900">{userStats.totalCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">Total Cases</h4>
-                    <p className="text-gray-500 text-sm mt-1">All cases registered</p>
+                    <h4 className="text-gray-600 font-medium">{t('totalCases')}</h4>
+                    <p className="text-gray-500 text-sm mt-1">{t('totalCasesDesc')}</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
@@ -324,8 +326,8 @@ const Profile = () => {
                       </div>
                       <span className="text-3xl font-bold text-amber-900">{userStats.pendingCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">Pending</h4>
-                    <p className="text-gray-500 text-sm mt-1">Awaiting resolution</p>
+                    <h4 className="text-gray-600 font-medium">{t('pending')}</h4>
+                    <p className="text-gray-500 text-sm mt-1">{t('pendingDesc')}</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
@@ -335,8 +337,8 @@ const Profile = () => {
                       </div>
                       <span className="text-3xl font-bold text-blue-900">{userStats.inProgressCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">In Progress</h4>
-                    <p className="text-gray-500 text-sm mt-1">Under investigation</p>
+                    <h4 className="text-gray-600 font-medium">{t('inProgress')}</h4>
+                    <p className="text-gray-500 text-sm mt-1">{t('inProgressDesc')}</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
@@ -346,8 +348,8 @@ const Profile = () => {
                       </div>
                       <span className="text-3xl font-bold text-emerald-900">{userStats.resolvedCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">Resolved</h4>
-                    <p className="text-gray-500 text-sm mt-1">Successfully closed</p>
+                    <h4 className="text-gray-600 font-medium">{t('resolved')}</h4>
+                    <p className="text-gray-500 text-sm mt-1">{t('resolvedDesc')}</p>
                   </div>
 
                   <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200 cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
@@ -357,14 +359,14 @@ const Profile = () => {
                       </div>
                       <span className="text-3xl font-bold text-red-900">{userStats.rejectedCases}</span>
                     </div>
-                    <h4 className="text-gray-600 font-medium">Rejected</h4>
-                    <p className="text-gray-500 text-sm mt-1">Cases not accepted</p>
+                    <h4 className="text-gray-600 font-medium">{t('rejected')}</h4>
+                    <p className="text-gray-500 text-sm mt-1">{t('rejectedDesc')}</p>
                   </div>
                 </div>
 
                 <div className="mt-8">
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Case Resolution Progress</span>
+                    <span className="text-sm font-medium text-gray-700">{t('caseResolutionProgress')}</span>
                     <span className="text-sm font-medium text-gray-900">
                       {userStats.totalCases > 0 
                         ? Math.round((userStats.resolvedCases / userStats.totalCases) * 100)
@@ -382,8 +384,8 @@ const Profile = () => {
                     ></div>
                   </div>
                   <div className="flex justify-between mt-2 text-xs text-gray-500">
-                    <span>{userStats.pendingCases + userStats.inProgressCases} ongoing</span>
-                    <span>{userStats.resolvedCases} resolved</span>
+                    <span>{userStats.pendingCases + userStats.inProgressCases} {t('ongoing')}</span>
+                    <span>{userStats.resolvedCases} {t('resolved')}</span>
                   </div>
                 </div>
               </CardContent>
@@ -396,7 +398,7 @@ const Profile = () => {
                 variant="outline"
               >
                 <Edit className="h-4 w-4" />
-                Edit Profile Information
+                {t('editProfileInformation')}
               </Button>
               {
                 isEditDialogOpen &&
@@ -407,7 +409,7 @@ const Profile = () => {
               }
               <Button onClick={()=>navigate("/myreport")} className="h-12 gap-3 cursor-pointer">
                 <FileText className="h-4 w-4" />
-                View All Cases
+                {t('viewAllCases')}
               </Button>
             </div>
           </div>

@@ -1,24 +1,25 @@
-
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 
 const CitizenFooter = () => {
+  const { t } = useTranslation();
   const userData = useSelector(state => state?.user?.user);
   
   const quickLinks = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
+    { name: "home", href: "/" },
+    { name: "about", href: "/about" },
     ...(!userData ? [
-      { name: "Login", href: "/login" },
-      { name: "Register", href: "/register" },
+      { name: "login", href: "/login" },
+      { name: "register", href: "/register" },
     ] : []),
   ];
 
   const emergencyContacts = [
-    { service: "Police", number: "100" },
-    { service: "Ambulance", number: "102" },
-    { service: "Fire", number: "101" },
-    { service: "Women Helpline", number: "1145" },
+    { service: t('police'), number: "100" },
+    { service: t('ambulance'), number: "102" },
+    { service: t('fire'), number: "101" },
+    { service: t('womenHelpline'), number: "1145" },
   ];
 
   return (
@@ -34,14 +35,18 @@ const CitizenFooter = () => {
       <div className="container relative mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h2 className="text-3xl font-bold mb-4">SmartReport</h2>
+            <div className="flex flex-row  gap-4 items-center">
+              <img src="/images/logo.png" alt="SmartReport Logo" className="h-16 w-16 mb-4" />
+
+            <h2 className="text-3xl font-bold mb-4">{t('smartReport')}</h2>
+            </div>
             <p className="text-gray-200">
-              Online crime reporting and management system for Nepal
+              {t('footerDescription')}
             </p>
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-xl font-semibold mb-4">{t('quickLinks')}</h3>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.name}>
@@ -50,7 +55,7 @@ const CitizenFooter = () => {
                     className="text-gray-200 hover:text-white transition-colors cursor-pointer hover:underline flex items-center"
                   >
                     <span className="mr-2">→</span>
-                    {link.name}
+                    {t(link.name)}
                   </Link>
                 </li>
               ))}
@@ -58,7 +63,7 @@ const CitizenFooter = () => {
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold mb-4">Emergency</h3>
+            <h3 className="text-xl font-semibold mb-4">{t('emergency')}</h3>
             <ul className="space-y-3">
               {emergencyContacts.map((contact) => (
                 <li key={contact.service} className="text-gray-200 hover:text-white transition-colors">
@@ -71,7 +76,7 @@ const CitizenFooter = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-green-700">
-          <h3 className="text-xl font-semibold mb-4">Contact</h3>
+          <h3 className="text-xl font-semibold mb-4">{t('contact')}</h3>
           <div className="space-y-3 text-gray-200">
             <p className="flex items-center">
               <span className="mr-3">✉️</span>
@@ -83,13 +88,13 @@ const CitizenFooter = () => {
             </p>
             <p className="flex items-center">
               <span className="mr-3">📍</span>
-              Ithari, Nepal
+              {t('location')}
             </p>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-green-700 text-center text-gray-300">
-          <p>© 2025 SmartReport. All rights reserved.</p>
+          <p>{t('copyright')}</p>
         </div>
       </div>
     </footer>

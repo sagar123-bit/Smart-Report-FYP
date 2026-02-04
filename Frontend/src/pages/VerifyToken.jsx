@@ -4,8 +4,10 @@ import { RefreshCw, Shield } from "lucide-react";
 import { toast } from "react-toastify";
 import axiosService from "@/utils/axiosService";
 import { REGISTER, RESEND_VERIFICATION_CODE } from "@/routes/serverEndpoint";
+import { useTranslation } from "react-i18next";
 
 const VerifyToken = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
@@ -85,7 +87,6 @@ const VerifyToken = () => {
     const fullToken = token.join("");
     
     if (fullToken.length !== 6) {
-  
       inputRefs.current.forEach(input => {
         input.style.transform = "translateX(10px)";
         setTimeout(() => input.style.transform = "translateX(-10px)", 100);
@@ -95,37 +96,32 @@ const VerifyToken = () => {
     }
 
     setIsLoading(true);
-try{
-     const response =await axiosService.post(REGISTER,{email,token:fullToken});
-     toast.success(response?.data?.message || "Email verified successfully.");
-     navigate("/login");
-}catch(error){
+    try {
+      const response = await axiosService.post(REGISTER, { email, token: fullToken });
+      toast.success(response?.data?.message || t('emailVerifiedSuccess'));
+      navigate("/login");
+    } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || "Verification failed. Please try again.");
+      toast.error(error?.response?.data?.message || t('verificationFailed'));
       inputRefs.current.forEach(input => {
         input.style.borderColor = "#ef4444";
-      
       })
-}
-       finally{
-         setIsLoading(false);
-       }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResendToken = async () => {
     if (countdown > 0) return;
     
     setIsResending(true);
-    try{
+    try {
       const response = await axiosService.post(RESEND_VERIFICATION_CODE, { email });
-      // console.log(response);
-      toast.success(response?.data?.message || "Verification code resent successfully.");
-    }
-    catch(error){
+      toast.success(response?.data?.message || t('codeResentSuccess'));
+    } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || "Failed to resend code. Please try again.");
-    }
-    finally{
+      toast.error(error?.response?.data?.message || t('resendFailed'));
+    } finally {
       setToken(["", "", "", "", "", ""]);
       setCountdown(30);
       setIsResending(false);
@@ -138,21 +134,19 @@ try{
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto mb-4 bg-green-50 rounded-full flex items-center justify-center">
             <Shield className="h-10 w-10 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Verify Your Email
+            {t('verifyYourEmail')}
           </h1>
           <p className="text-gray-600">
-            Enter the 6-digit code sent to
+            {t('enterCodeSentTo')}
             <span className="font-semibold text-green-700 ml-1">{email}</span>
           </p>
         </div>
 
-        {/* Token Inputs */}
         <form onSubmit={handleSubmit}>
           <div className="flex justify-center gap-3 mb-8">
             {token.map((digit, index) => (
@@ -170,7 +164,6 @@ try{
             ))}
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={!isTokenComplete || isLoading}
@@ -183,16 +176,15 @@ try{
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <RefreshCw className="h-5 w-5 animate-spin" />
-                Verifying...
+                {t('verifying')}
               </span>
             ) : (
-              "Verify & Continue"
+              t('verifyContinue')
             )}
           </button>
 
-          {/* Resend Section */}
           <div className="text-center">
-            <p className="text-gray-600 mb-3">Didn't receive the code?</p>
+            <p className="text-gray-600 mb-3">{t('didntReceiveCode')}</p>
             <button
               type="button"
               onClick={handleResendToken}
@@ -202,27 +194,27 @@ try{
               {isResending ? (
                 <span className="flex items-center justify-center gap-2">
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  Sending...
+                  {t('sending')}
                 </span>
               ) : countdown > 0 ? (
-                `Resend in ${countdown}s`
+                `${t('resendIn')} ${countdown}s`
               ) : (
                 <span className="flex items-center justify-center gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  Resend Code
+                  {t('resendCode')}
                 </span>
               )}
             </button>
           </div>
         </form>
 
-        {/* Back Button */}
+
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <button
             onClick={() => navigate(-1)}
             className="text-green-700 hover:text-green-800 font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-colors"
           >
-            ← Back
+            ← {t('back')}
           </button>
         </div>
       </div>

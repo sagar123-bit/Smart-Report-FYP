@@ -13,10 +13,12 @@ import axiosService from '@/utils/axiosService';
 import { DELETE_CRIME_REPORT, CREATE_CRIME_REPORT_ROOM } from '@/routes/serverEndpoint';
 import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next";
 
 const MyReports = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const userState = useSelector(state => state?.user);
   const crimeReportsState = useSelector(state=>state?.allReports);
   const { user } = userState || {};
@@ -255,7 +257,7 @@ const MyReports = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading reports...</p>
+          <p className="text-gray-600">{t("loadingReports")}</p>
         </div>
       </div>
     );
@@ -266,8 +268,8 @@ const MyReports = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Reports</h1>
-            <p className="text-gray-600">Track and manage all your submitted crime reports</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("myReports")}</h1>
+            <p className="text-gray-600">{t("trackManageReports")}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
@@ -275,7 +277,7 @@ const MyReports = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Total Reports</p>
+                    <p className="text-sm text-gray-500">{t("totalReports")}</p>
                     <p className="text-3xl font-bold mt-2">{stats.total}</p>
                   </div>
                   <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -289,7 +291,7 @@ const MyReports = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Pending</p>
+                    <p className="text-sm text-gray-500">{t("pending")}</p>
                     <p className="text-3xl font-bold mt-2">{stats.pending}</p>
                   </div>
                   <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -303,7 +305,7 @@ const MyReports = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">In Progress</p>
+                    <p className="text-sm text-gray-500">{t("inProgress")}</p>
                     <p className="text-3xl font-bold mt-2">{stats.inProgress}</p>
                   </div>
                   <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -317,7 +319,7 @@ const MyReports = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Resolved</p>
+                    <p className="text-sm text-gray-500">{t("resolved")}</p>
                     <p className="text-3xl font-bold mt-2">{stats.resolved}</p>
                   </div>
                   <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -331,7 +333,7 @@ const MyReports = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Rejected</p>
+                    <p className="text-sm text-gray-500">{t("rejected")}</p>
                     <p className="text-3xl font-bold mt-2">{stats.rejected}</p>
                   </div>
                   <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -346,16 +348,16 @@ const MyReports = () => {
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <CardTitle>All Reports</CardTitle>
+                  <CardTitle>{t("allReports")}</CardTitle>
                   <CardDescription>
-                    Manage and track the status of your submitted reports
+                    {t("manageTrackReports")}
                   </CardDescription>
                 </div>
                 <Button
                   onClick={() => navigate("/reportcrime")}
                   className="cursor-pointer"
                 >
-                  + Create New Report
+                  + {t("createNewReport")}
                 </Button>
               </div>
             </CardHeader>

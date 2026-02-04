@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { useTranslation } from "react-i18next";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -43,21 +44,22 @@ L.Icon.Default.mergeOptions({
 });
 
 const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
+  const { t } = useTranslation();
   const [activeImage, setActiveImage] = useState(0);
   const serverUrl = import.meta.env.VITE_SERVER_URL;
 
   const getStatusBadge = (status) => {
     switch(status) {
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">{t('pending')}</Badge>;
       case "in-progress":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{t('inProgress')}</Badge>;
       case "resolved":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Resolved</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{t('resolved')}</Badge>;
       case "rejected":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{t('rejected')}</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">{t('unknown')}</Badge>;
     }
   };
 
@@ -87,7 +89,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
         minute: '2-digit'
       });
     } catch {
-      return "Invalid Date";
+      return t('invalidDate');
     }
   };
 
@@ -106,15 +108,15 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
               <div>
                 <DrawerTitle className="flex items-center gap-2 text-xl">
                   <FileText className="h-5 w-5" />
-                  Report: {report.reportId}
+                  {t('report')}: {report.reportId}
                 </DrawerTitle>
                 <DrawerDescription>
-                  Complete details about the crime report
+                  {t('completeReportDetails')}
                 </DrawerDescription>
               </div>
               <DrawerClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                 <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{t('close')}</span>
               </DrawerClose>
             </div>
             <div className="mt-2">
@@ -125,9 +127,9 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
           <div className="p-4 overflow-y-auto max-h-[calc(95vh-140px)]">
             <Tabs defaultValue="details" className="w-full">
               <TabsList className="grid grid-cols-3 w-full sticky top-0 bg-white z-10">
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="evidence">Evidence</TabsTrigger>
-                <TabsTrigger value="people">People</TabsTrigger>
+                <TabsTrigger value="details">{t('details')}</TabsTrigger>
+                <TabsTrigger value="evidence">{t('evidence')}</TabsTrigger>
+                <TabsTrigger value="people">{t('people')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 mt-4">
@@ -135,19 +137,19 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      Incident Information
+                      {t('incidentInformation')}
                     </h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Crime Type:</span>
+                        <span className="text-gray-600">{t('crimeType')}:</span>
                         <span className="font-medium capitalize">{report.crimeType?.replace(/-/g, ' ')}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Incident Date:</span>
+                        <span className="text-gray-600">{t('incidentDate')}:</span>
                         <span className="font-medium">{formatDate(report.incidentDate)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Incident Time:</span>
+                        <span className="text-gray-600">{t('incidentTime')}:</span>
                         <span className="font-medium">{report.incidentTime}</span>
                       </div>
                     </div>
@@ -156,19 +158,19 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      Location Details
+                      {t('locationDetails')}
                     </h3>
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Address:</span>
+                        <span className="text-gray-600">{t('address')}:</span>
                         <span className="font-medium text-right">{report.locationAddress}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Province:</span>
-                        <span className="font-medium">{report.province || "Not specified"}</span>
+                        <span className="text-gray-600">{t('province')}:</span>
+                        <span className="font-medium">{report.province || t('notSpecified')}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Coordinates:</span>
+                        <span className="text-gray-600">{t('coordinates')}:</span>
                         <span className="font-medium">
                           {report.coordinates?.latitude?.toFixed(6)}, {report.coordinates?.longitude?.toFixed(6)}
                         </span>
@@ -187,9 +189,9 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                             />
                             <Marker position={[report.coordinates.latitude, report.coordinates.longitude]}>
                               <Popup>
-                                Crime Location<br />
+                                {t('crimeLocation')}<br />
                                 {report.locationAddress}<br />
-                                Province: {report.province}
+                                {t('province')}: {report.province}
                               </Popup>
                             </Marker>
                           </MapContainer>
@@ -201,26 +203,26 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Case Details
+                      {t('caseDetails')}
                     </h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Report ID:</span>
+                        <span className="text-gray-600">{t('reportId')}:</span>
                         <span className="font-medium">{report.reportId}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Status:</span>
+                        <span className="text-gray-600">{t('status')}:</span>
                         <span className="flex items-center gap-1">
                           {getStatusIcon(report.status)}
                           <span className="capitalize">{report.status?.replace('-', ' ')}</span>
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Reported On:</span>
+                        <span className="text-gray-600">{t('reportedOn')}:</span>
                         <span className="font-medium">{formatDate(report.createdAt)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Last Updated:</span>
+                        <span className="text-gray-600">{t('lastUpdated')}:</span>
                         <span className="font-medium">{formatDate(report.updatedAt)}</span>
                       </div>
                     </div>
@@ -229,10 +231,10 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Description
+                      {t('description')}
                     </h3>
                     <div className="max-h-40 overflow-y-auto pr-2">
-                      <p className="text-gray-700 whitespace-pre-line">{report.description || "No description provided"}</p>
+                      <p className="text-gray-700 whitespace-pre-line">{report.description || t('noDescriptionProvided')}</p>
                     </div>
                   </div>
                 </div>
@@ -242,9 +244,9 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <ImageIcon className="h-4 w-4" />
-                    Evidence Files
+                    {t('evidenceFiles')}
                     <Badge variant="outline" className="ml-2">
-                      {report.evidenceUrls?.length || 0} files
+                      {report.evidenceUrls?.length || 0} {t('files')}
                     </Badge>
                   </h3>
                   
@@ -298,7 +300,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
 
                       <div className="flex justify-between items-center mt-2">
                         <div className="text-sm text-gray-600">
-                          {activeImage + 1} of {report.evidenceUrls.length}
+                          {activeImage + 1} {t('of')} {report.evidenceUrls.length}
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -327,7 +329,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <ImageIcon className="h-12 w-12 mx-auto mb-3" />
-                      <p>No evidence files uploaded</p>
+                      <p>{t('noEvidenceFiles')}</p>
                     </div>
                   )}
                 </div>
@@ -338,7 +340,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Reporter Information
+                      {t('reporterInformation')}
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
@@ -354,8 +356,8 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium">{report.reportedBy?.userName || "Unknown"}</p>
-                          <p className="text-sm text-gray-600 capitalize">{report.reportedBy?.userType || "Citizen"}</p>
+                          <p className="font-medium">{report.reportedBy?.userName || t('unknown')}</p>
+                          <p className="text-sm text-gray-600 capitalize">{report.reportedBy?.userType || t('citizen')}</p>
                         </div>
                       </div>
                       
@@ -364,16 +366,16 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-700">{report.reportedBy?.email || "Not provided"}</span>
+                          <span className="text-gray-700">{report.reportedBy?.email || t('notProvided')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-700">{report.reportedBy?.phoneNumber || "Not provided"}</span>
+                          <span className="text-gray-700">{report.reportedBy?.phoneNumber || t('notProvided')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-700">
-                            {report.reportedBy?.district || "Unknown"}, {report.reportedBy?.province || "Unknown"}
+                            {report.reportedBy?.district || t('unknown')}, {report.reportedBy?.province || t('unknown')}
                           </span>
                         </div>
                       </div>
@@ -383,7 +385,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <Shield className="h-4 w-4" />
-                      Assigned Officer
+                      {t('assignedOfficer')}
                     </h3>
                     {report.assignedTo ? (
                       <div className="space-y-3">
@@ -400,8 +402,8 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium">{report.assignedTo?.userName || "Unknown Officer"}</p>
-                            <p className="text-sm text-gray-600">Police Officer</p>
+                            <p className="font-medium">{report.assignedTo?.userName || t('unknownOfficer')}</p>
+                            <p className="text-sm text-gray-600">{t('policeOfficer')}</p>
                             {report.assignedTo?.policeData && (
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
@@ -417,14 +419,14 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                         
                         <div className="space-y-2">
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Assigned Status:</span>
+                            <span className="text-gray-600">{t('assignedStatus')}:</span>
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Active
+                              {t('active')}
                             </Badge>
                           </div>
                           {report.acceptedAt && (
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Accepted On:</span>
+                              <span className="text-gray-600">{t('acceptedOn')}:</span>
                               <span className="font-medium">{formatDate(report.acceptedAt)}</span>
                             </div>
                           )}
@@ -435,21 +437,21 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                         <div className="space-y-2">
                           <h4 className="font-medium text-gray-900 flex items-center gap-2">
                             <PhoneCall className="h-4 w-4" />
-                            Contact Information
+                            {t('contactInformation')}
                           </h4>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <Mail className="h-4 w-4 text-gray-400" />
-                              <span className="text-gray-700">{report.assignedTo?.email || "Not provided"}</span>
+                              <span className="text-gray-700">{report.assignedTo?.email || t('notProvided')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 text-gray-400" />
-                              <span className="text-gray-700">{report.assignedTo?.phoneNumber || "Not provided"}</span>
+                              <span className="text-gray-700">{report.assignedTo?.phoneNumber || t('notProvided')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <MapPin className="h-4 w-4 text-gray-400" />
                               <span className="text-gray-700">
-                                {report.assignedTo?.district || "Unknown"}, {report.assignedTo?.province || "Unknown"}
+                                {report.assignedTo?.district || t('unknown')}, {report.assignedTo?.province || t('unknown')}
                               </span>
                             </div>
                           </div>
@@ -458,8 +460,8 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
                     ) : (
                       <div className="text-center py-8 text-gray-500">
                         <AlertCircle className="h-12 w-12 mx-auto mb-3" />
-                        <p>No officer assigned yet</p>
-                        <p className="text-sm mt-1">This case is awaiting assignment</p>
+                        <p>{t('noOfficerAssigned')}</p>
+                        <p className="text-sm mt-1">{t('awaitingAssignment')}</p>
                       </div>
                     )}
                   </div>
@@ -470,7 +472,7 @@ const ReportDetailDrawer = ({ open, onOpenChange, report }) => {
 
           <DrawerFooter className="border-t sticky bottom-0 bg-white">
             <DrawerClose asChild>
-              <Button className="w-full">Close</Button>
+              <Button className="w-full">{t('close')}</Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

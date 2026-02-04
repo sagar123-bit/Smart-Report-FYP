@@ -14,8 +14,10 @@ import { toast } from "react-toastify";
 import axiosService from "@/utils/axiosService";
 import { FORGET_PASSWORD } from "@/routes/serverEndpoint";
 import { Mail, Shield, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ForgotPasswordDialog = ({ open, onOpenChange }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,27 +25,27 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
     e.preventDefault();
     
     if (!email) {
-      toast.error("Please enter your email address");
+      toast.error(t('enterEmailError'));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
+      toast.error(t('validEmailError'));
       return;
     }
 
     setIsLoading(true);
     try {
       const response = await axiosService.post(FORGET_PASSWORD, { email });
-      toast.success(response?.data?.message || "Reset password email sent! Please check your inbox.");
+      toast.success(response?.data?.message || t('resetEmailSent'));
       setEmail("");
       onOpenChange(false);
     } catch (error) {
       console.log(error);
       toast.error(
         error?.response?.data?.message || 
-        "Failed to send reset password email. Please try again."
+        t('resetEmailFailed')
       );
     } finally {
       setIsLoading(false);
@@ -63,10 +65,10 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
             <Shield className="h-6 w-6 text-emerald-600" />
           </div>
           <DialogTitle className="text-xl font-bold text-gray-800">
-            Forgot Password
+            {t('forgotPassword')}
           </DialogTitle>
           <DialogDescription className="text-gray-600 mt-2">
-            Enter your email to receive a password reset link
+            {t('resetPasswordDescription')}
           </DialogDescription>
         </DialogHeader>
         
@@ -74,15 +76,15 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="forgot-email" className="text-gray-700 font-medium">
-                Email Address
+                {t('email')}
               </Label>
-              <span className="text-xs text-gray-500">Required</span>
+              <span className="text-xs text-gray-500">{t('required')}</span>
             </div>
             <div className="relative">
               <Input
                 id="forgot-email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -98,9 +100,9 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-emerald-800">Secure password reset</p>
+                <p className="text-sm font-medium text-emerald-800">{t('secureReset')}</p>
                 <p className="text-xs text-emerald-700 mt-1">
-                  Your security is our priority. The reset link is encrypted and expires after 10 minutes.
+                  {t('secureResetDescription')}
                 </p>
               </div>
             </div>
@@ -114,7 +116,7 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
               disabled={isLoading}
               className="w-full sm:w-auto border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button 
               type="submit" 
@@ -124,10 +126,10 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
               {isLoading ? (
                 <span className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {t('processing')}
                 </span>
               ) : (
-                "Send Reset Email"
+                t('sendResetEmail')
               )}
             </Button>
           </DialogFooter>
@@ -135,13 +137,13 @@ const ForgotPasswordDialog = ({ open, onOpenChange }) => {
 
         <div className="mt-6 pt-6 border-t border-gray-100">
           <p className="text-xs text-center text-gray-500">
-            Didn't receive the email? Check your spam folder or{" "}
+            {t('noEmailReceived')}{" "}
             <button
               type="button"
               onClick={handleSubmit}
               className="text-emerald-600 hover:text-emerald-700 font-medium underline underline-offset-2"
             >
-              try again
+              {t('tryAgain')}
             </button>
           </p>
         </div>

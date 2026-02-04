@@ -1,57 +1,61 @@
 import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
 
 const About = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useSelector((state) => state.user);
 
   const provinces = [
-    { number: "1", name: "Koshi" },
-    { number: "2", name: "Madhesh" },
-    { number: "3", name: "Bagmati" },
-    { number: "4", name: "Gandaki" },
-    { number: "5", name: "Lumbini" },
-    { number: "6", name: "Karnali" },
-    { number: "7", name: "Sudurpashchim" },
+    { number: "1", name: t('koshi') },
+    { number: "2", name: t('madhesh') },
+    { number: "3", name: t('bagmati') },
+    { number: "4", name: t('gandaki') },
+    { number: "5", name: t('lumbini') },
+    { number: "6", name: t('karnali') },
+    { number: "7", name: t('sudurpashchim') },
   ];
 
   const features = [
     {
-      title: "For Citizens",
+      title: t('forCitizens'),
       items: [
-        "File crime reports with evidence",
-        "Track case status in real-time",
-        "Chat with assigned police officers",
-        "Receive notifications on updates",
-        "SOS emergency reporting"
+        t('citizenFeature1'),
+        t('citizenFeature2'),
+        t('citizenFeature3'),
+        t('citizenFeature4'),
+        t('citizenFeature5')
       ]
     },
     {
-      title: "For Police",
+      title: t('forPolice'),
       items: [
-        "View province-specific cases",
-        "Accept and assign cases",
-        "Update case status and notes",
-        "Request additional information",
-        "Close resolved cases"
+        t('policeFeature1'),
+        t('policeFeature2'),
+        t('policeFeature3'),
+        t('policeFeature4'),
+        t('policeFeature5')
       ]
     },
     {
-      title: "For Administrators",
+      title: t('forAdministrators'),
       items: [
-        "View all cases nationwide",
-        "Manage user accounts",
-        "Detect fake/duplicate reports",
-        "View analytics and statistics",
-        "Monitor system activity"
+        t('adminFeature1'),
+        t('adminFeature2'),
+        t('adminFeature3'),
+        t('adminFeature4'),
+        t('adminFeature5')
       ]
     }
   ];
 
   const aboutStats = [
-    { title: "Secure & Confidential", description: "All reports are encrypted and handled with utmost confidentiality" },
-    { title: "Fast Response", description: "Quick assignment and response from local police authorities" },
-    { title: "Transparent Process", description: "Track every step of your case from filing to resolution" },
+    { title: t('secureConfidential'), description: t('secureDesc') },
+    { title: t('fastResponse'), description: t('fastResponseDesc') },
+    { title: t('transparentProcess'), description: t('transparentDesc') },
   ];
 
   return (
@@ -64,34 +68,44 @@ const About = () => {
         <div className="container relative h-full mx-auto px-4 flex items-center">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
-              About SmartReport
+              {t('aboutTitle')}
             </h1>
             <p className="text-xl md:text-2xl mb-10 text-white/90">
-              Nepal's first comprehensive online crime reporting and management system
+              {t('aboutSubtitle')}
             </p>
-            <Button
-              onClick={() => navigate("/register")}
-              className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
-              size="lg"
-            >
-              Join Now
-            </Button>
+            {user ? (
+              <Button
+                onClick={() => navigate("/reportcrime")}
+                className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
+                size="lg"
+              >
+                {t('reportCrime')}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => navigate("/register")}
+                className="bg-white text-green-900 hover:bg-green-50 px-10 py-6 text-lg font-semibold cursor-pointer"
+                size="lg"
+              >
+                {t('joinNow')}
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">Our Mission</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">{t('ourMission')}</h2>
           <div className="prose prose-lg mx-auto text-gray-700">
             <p className="text-lg mb-6">
-              SmartReport is dedicated to creating a safer Nepal by providing an accessible, transparent, and efficient platform for crime reporting and management. We bridge the gap between citizens and law enforcement agencies through technology.
+              {t('missionPara1')}
             </p>
             <p className="text-lg mb-6">
-              Our platform empowers citizens to report crimes easily, track case progress in real-time, and communicate directly with police officers. We ensure that every voice is heard and every case receives the attention it deserves.
+              {t('missionPara2')}
             </p>
             <p className="text-lg">
-              By leveraging modern technology, we aim to reduce response times, improve case resolution rates, and build trust between communities and law enforcement.
+              {t('missionPara3')}
             </p>
           </div>
         </div>
@@ -113,9 +127,9 @@ const About = () => {
       </div>
 
       <div className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Platform Features</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">{t('platformFeatures')}</h2>
         <p className="text-lg text-gray-600 text-center mb-12 max-w-3xl mx-auto">
-          Comprehensive tools for citizens, police, and administrators
+          {t('platformFeaturesDesc')}
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -139,9 +153,9 @@ const About = () => {
 
       <div className="bg-gray-50 py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Serving All 7 Provinces</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">{t('servingAllProvinces')}</h2>
           <p className="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Province-based access control ensures relevant case visibility
+            {t('provincesDesc')}
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-16">
@@ -156,18 +170,18 @@ const About = () => {
           </div>
 
           <div className="border-t pt-12 mt-12">
-            <h3 className="text-2xl font-bold text-center mb-8">Need Help?</h3>
+            <h3 className="text-2xl font-bold text-center mb-8">{t('needHelp')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="text-4xl font-bold text-green-900 mb-2">Emergency</div>
+                <div className="text-4xl font-bold text-green-900 mb-2">{t('emergency')}</div>
                 <div className="text-2xl font-bold text-gray-700">100</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-green-900 mb-2">Email</div>
+                <div className="text-4xl font-bold text-green-900 mb-2">{t('email')}</div>
                 <div className="text-lg font-medium text-gray-700">support@smartreport.gov.np</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-green-900 mb-2">Helpline</div>
+                <div className="text-4xl font-bold text-green-900 mb-2">{t('helpline')}</div>
                 <div className="text-2xl font-bold text-gray-700">+977-1-4200000</div>
               </div>
             </div>

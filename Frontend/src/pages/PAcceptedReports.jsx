@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { UPDATE_REPORT_STATUS } from '@/routes/serverEndpoint';
+import { CREATE_CRIME_REPORT_ROOM, UPDATE_REPORT_STATUS } from '@/routes/serverEndpoint';
 import { fetchAllCrimeReports } from '@/store/slices/getAllReports';
 import axiosService from '@/utils/axiosService';
 import {
@@ -17,6 +17,7 @@ import {
   FileText,
   Filter,
   MapPin,
+  MessageSquare,
   PlayCircle,
   Search,
   User
@@ -42,6 +43,7 @@ const PAcceptedReports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [reportsPerPage] = useState(10);
   const [updatingReportId, setUpdatingReportId] = useState(null);
+  const [contacting, setContacting] = useState({});
   
   useEffect(() => {
     dispatch(fetchAllCrimeReports());
@@ -189,6 +191,35 @@ const PAcceptedReports = () => {
       toast.error(error?.response?.data?.message || "Failed to update report status");
     } finally {
       setUpdatingReportId(null);
+    }
+  };
+
+  const handleContactReporter = async (reportId, reporter) => {
+    if (!user || !reporter) {
+      toast.error("Unable to contact reporter");
+      return;
+    }
+
+    setContacting(prev => ({ ...prev, [reportId]: true }));
+    try {
+      const response = await axiosService.post(
+        CREATE_CRIME_REPORT_ROOM,
+        {
+          otherUserId: reporter._id,
+          reportId: reportId,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.status === 201 || response.status === 200) {
+        toast.success(response.data.message || "Chat room created successfully!");
+        navigate(`/policedashboard/chats?room=${response.data.room._id}`);
+      }
+    } catch (error) {
+      console.error("Contact reporter error:", error);
+      toast.error(error.response?.data?.message || "Failed to create chat room");
+    } finally {
+      setContacting(prev => ({ ...prev, [reportId]: false }));
     }
   };
   
@@ -450,6 +481,17 @@ const PAcceptedReports = () => {
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             View
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleContactReporter(report._id, report.reportedBy)}
+                            disabled={contacting[report._id] || updatingReportId === report._id}
+                            className="cursor-pointer"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            {contacting[report._id] ? 'Creating...' : 'Contact'}
                           </Button>
                           
                           {report.status === 'in-progress' && (

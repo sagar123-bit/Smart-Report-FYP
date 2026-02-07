@@ -93,7 +93,7 @@ const notificationSlice = createSlice({
     reducers: {
         addNotification: (state, action) => {
             state.notifications.push(action.payload);
-            state.unreadCount = state.notifications.filter((n) => !n.read).length;
+            state.unreadCount = state.notifications?.filter((n) => !n.read).length;
         },
     },
     extraReducers: (builder) => {
@@ -105,7 +105,7 @@ const notificationSlice = createSlice({
             .addCase(fetchNotifications.fulfilled, (state, action) => {
                 state.loading = false;
                 state.notifications = action.payload;
-                state.unreadCount = action.payload.filter((n) => !n.read).length;
+                state.unreadCount = action.payload?.filter((n) => !n.read).length;
             })
             .addCase(fetchNotifications.rejected, (state, action) => {
                 state.loading = false;
@@ -120,10 +120,10 @@ const notificationSlice = createSlice({
                 state.unreadCount = 0;
             })
             .addCase(deleteNotification.fulfilled, (state, action) => {
-                state.notifications = state.notifications.filter(
+                state.notifications = state.notifications?.filter(
                     (n) => n._id !== action.payload
                 );
-                state.unreadCount = state.notifications.filter((n) => !n.read).length;
+                state.unreadCount = state.notifications?.filter((n) => !n.read).length;
             })
 
             .addCase(clearAllNotifications.fulfilled, (state) => {

@@ -43,11 +43,11 @@ const CitizenNavbar = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
   const notificationRef = useRef(null);
   
-  const userNotifications = allNotifications.filter(notification => 
+  const userNotifications = allNotifications?.filter(notification => 
     notification.userId?._id === userData?._id
   );
   
-  const unreadCount = userNotifications.filter(notification => !notification.read).length;
+  const unreadCount = userNotifications?.filter(notification => !notification.read).length;
   
   useEffect(() => {
     dispatch(fetchNotifications());

@@ -1,12 +1,11 @@
 import {
   clearAllNotifications,
   deleteNotification,
-  fetchNotifications,
   markAllNotificationsRead
 } from '@/store/slices/getAllNotifications';
 import { logoutUser } from '@/store/slices/userSlice';
 import { Bell, Check, CheckCheck, ChevronDown, FileText, Globe, LogOut, Trash2, UserCircle } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -41,34 +40,13 @@ const CitizenNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
-  const notificationRef = useRef(null);
   
   const userNotifications = allNotifications.filter(notification => 
     notification.userId?._id === userData?._id
   );
   
   const unreadCount = userNotifications.filter(notification => !notification.read).length;
-  
-  useEffect(() => {
-    dispatch(fetchNotifications());
-  }, [dispatch]);
-  
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target) &&
-        !event.target.closest('[data-notification-button]')
-      ) {
-        if(isNotificationOpen){
-          setIsNotificationOpen(false);
-        }
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isNotificationOpen]);
+
   
   const baseNavItems = [
     { id: 1, name: 'home', path: '/' },
@@ -107,9 +85,10 @@ const CitizenNavbar = () => {
     setIsNotificationOpen(prev => !prev);
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     if (unreadCount > 0) {
-      dispatch(markAllNotificationsRead());
+      await dispatch(markAllNotificationsRead());
+      setIsNotificationOpen(false);
     }
   };
 
@@ -146,12 +125,14 @@ const CitizenNavbar = () => {
   const handleDeleteNotification = (notificationId, e) => {
     e.stopPropagation();
     dispatch(deleteNotification(notificationId));
+    setIsNotificationOpen(false);
   };
 
   const handleClearAllNotifications = () => {
     const userNotificationIds = userNotifications.map(n => n._id);
     if (userNotificationIds.length > 0) {
       dispatch(clearAllNotifications());
+      setIsNotificationOpen(false);
     }
   };
 
@@ -253,7 +234,7 @@ const CitizenNavbar = () => {
                 </button>
                 
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" >
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">{t('notifications')}</h3>
                       {userNotifications.length > 0 && (
@@ -396,7 +377,7 @@ const CitizenNavbar = () => {
                 </button>
                 
                 {isNotificationOpen && (
-                  <div className="fixed top-16 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" ref={notificationRef}>
+                  <div className="fixed top-16 right-0 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" >
                     <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">{t('notifications')}</h3>
                       {userNotifications.length > 0 && (

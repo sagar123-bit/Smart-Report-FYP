@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { io as initSocket } from "socket.io-client";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addNotification } from "@/store/slices/getAllNotifications";
 
 const LiveContext = createContext(null);
@@ -9,6 +9,7 @@ export const useLiveSocket = () => useContext(LiveContext);
 
 const LiveSocketProvider = ({ children }) => {
   const { user } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
   const [connection, setConnection] = useState(null);
 
@@ -30,7 +31,7 @@ const LiveSocketProvider = ({ children }) => {
     });
 
      socketClient.on("notification", async (notification) => {
-      await addNotification(notification);
+      await dispatch(addNotification(notification));
     });
 
     

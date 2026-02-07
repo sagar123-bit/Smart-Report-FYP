@@ -37,6 +37,8 @@ userRouter.delete("/delete-report/:reportId",CrimeReportController.deleteReport)
 userRouter.patch("/update-user-status/:userId",updateUserStatus);
 userRouter.patch("/verify-police/:userId",verifyPolice);
 userRouter.patch("/update-report-status/:reportId",CrimeReportController.updateReportStatus);
+
+
 userRouter.get("/get-all-notifications",getAllNotifications);
 userRouter.delete("/delete-single-notification/:notificationId",deleteNotification);
 userRouter.delete("/delete-all-notifications",clearAllNotifications);

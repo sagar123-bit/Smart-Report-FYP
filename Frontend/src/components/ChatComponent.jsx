@@ -34,9 +34,9 @@ import { toast } from 'react-toastify';
 const ChatComponent = () => {
   const navigate = useNavigate();
   const { user } = useSelector(state => state?.user || {});
-  const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const scrollViewportRef = useRef(null);
   
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -172,8 +172,8 @@ const ChatComponent = () => {
   }, [user?._id]);
 
   const scrollToBottom = useCallback(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
     }
   }, []);
 
@@ -637,85 +637,117 @@ const ChatComponent = () => {
                     </div>
                   </div>
 
-                  <ScrollArea 
+                  <div 
                     ref={messagesContainerRef}
-                    className="flex-1 p-4 bg-gray-50"
+                    className="flex-1 overflow-hidden relative"
                   >
-                    {loadingMessages ? (
-                      <div className="flex items-center justify-center h-full">
-                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                        <p className="mb-2">No messages yet</p>
-                        <p className="text-sm">Say hello to start the conversation</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {messages.map((message) => {
-                          const isMe = message.from?._id === user?._id;
-                          const isTemp = message.isTemp;
-                          
-                          return (
-                            <div
-                              key={message._id}
-                              className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div className={`max-w-xs lg:max-w-md ${
-                                isMe ? 'ml-auto' : 'mr-auto'
-                              }`}>
-                                {!isMe && (
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-medium text-gray-700">
-                                      {message.from.userName}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      {formatTime(message.createdAt)}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                <div className={`rounded-lg p-3 ${
-                                  isMe 
-                                    ? 'bg-blue-600 text-white rounded-br-none' 
-                                    : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
-                                }`}>
-                                  {renderMessageContent(message)}
-                                  {isTemp && message.isUploading && (
-                                    <div className="mt-2">
-                                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                        <div 
-                                          className="h-full bg-blue-400 transition-all duration-300"
-                                          style={{ width: `${fileProgress}%` }}
-                                        />
+                    <ScrollArea 
+                      className="h-full"
+                      viewportRef={scrollViewportRef}
+                    >
+                      <div className="p-4">
+                        {loadingMessages ? (
+                          <div className="flex items-center justify-center h-full min-h-[200px]">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                          </div>
+                        ) : messages.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-gray-500">
+                            <p className="mb-2">No messages yet</p>
+                            <p className="text-sm">Say hello to start the conversation</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {messages.map((message) => {
+                              const isMe = message.from?._id === user?._id;
+                              const isTemp = message.isTemp;
+                              
+                              return (
+                                <div
+                                  key={message._id}
+                                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div className={`max-w-xs lg:max-w-md ${
+                                    isMe ? 'ml-auto' : 'mr-auto'
+                                  }`}>
+                                    {!isMe && (
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-medium text-gray-700">
+                                          {message.from.userName}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          {formatTime(message.createdAt)}
+                                        </span>
                                       </div>
-                                      <p className="text-xs mt-1">
-                                        Uploading {fileProgress}%
-                                      </p>
+                                    )}
+                                    
+                                    <div className={`rounded-lg p-3 ${
+                                      isMe 
+                                        ? 'bg-blue-600 text-white rounded-br-none' 
+                                        : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
+                                    }`}>
+                                      {renderMessageContent(message)}
+                                      {isTemp && message.isUploading && (
+                                        <div className="mt-2">
+                                          <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-blue-400 transition-all duration-300"
+                                              style={{ width: `${fileProgress}%` }}
+                                            />
+                                          </div>
+                                          <p className="text-xs mt-1">
+                                            Uploading {fileProgress}%
+                                          </p>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                                
-                                {isMe && (
-                                  <div className="flex items-center justify-end gap-2 mt-1">
-                                    <span className="text-xs text-gray-500">
-                                      {formatTime(message.createdAt)}
-                                    </span>
-                                    {isTemp ? (
-                                      <Clock className="h-3 w-3 text-gray-400 animate-spin" />
-                                    ) : (
-                                      <CheckCheck className="h-3 w-3 text-blue-500" />
+                                    
+                                    {isMe && (
+                                      <div className="flex items-center justify-end gap-2 mt-1">
+                                        <span className="text-xs text-gray-500">
+                                          {formatTime(message.createdAt)}
+                                        </span>
+                                        {isTemp ? (
+                                          <Clock className="h-3 w-3 text-gray-400 animate-spin" />
+                                        ) : (
+                                          <CheckCheck className="h-3 w-3 text-blue-500" />
+                                        )}
+                                      </div>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <div ref={messagesEndRef} />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </ScrollArea>
+                    </ScrollArea>
+                    
+                    <style jsx global>{`
+                      /* Custom scrollbar styles */
+                      [data-radix-scroll-area-viewport] {
+                        scrollbar-width: thin;
+                        scrollbar-color: #cbd5e1 #f1f5f9;
+                      }
+                      
+                      [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+                        width: 6px;
+                      }
+                      
+                      [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+                        background: #f1f5f9;
+                        border-radius: 3px;
+                      }
+                      
+                      [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+                        background-color: #cbd5e1;
+                        border-radius: 3px;
+                      }
+                      
+                      [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+                        background-color: #94a3b8;
+                      }
+                    `}</style>
+                  </div>
 
                   <div className="p-4 border-t border-gray-200 bg-white">
                     <div className="flex items-center gap-2">

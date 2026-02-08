@@ -46,28 +46,7 @@ const CitizenNavbar = () => {
   );
   
   const unreadCount = userNotifications?.filter(notification => !notification.read).length;
-  
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target) &&
-        !event.target.closest('[data-notification-button]')
-      ) {
-        if(isNotificationOpen){
-          setIsNotificationOpen(false);
-        }
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isNotificationOpen]);
-=======
-  const unreadCount = userNotifications.filter(notification => !notification.read).length;
-
->>>>>>> 3d05f35083cd759a40d61a2bfbbc22321c93ce78
   
   const baseNavItems = [
     { id: 1, name: 'home', path: '/' },
